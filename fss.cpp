@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
 	cout << p.string() << "\\" << endl;					
 		
 	directory_iterator myDir(p, std::filesystem::directory_options::skip_permission_denied);		    
-	printContent1(myDir, 0);
+	printContent2(myDir, 0);
 	directory_entry ent;
 
 }
