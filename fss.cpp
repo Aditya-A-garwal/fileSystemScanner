@@ -47,15 +47,15 @@ void printContent1(directory_iterator iter, int s) {
 		ent = *iter;											
 
 	    if(ent.is_directory() == 1) {				
-			cout << getSizeOf(ent);
+			cout << setfill(' ') << setw(10) << getSizeOf(ent);
 			if(s <= 6) { 
-				for(int i = 0; i <= s; i++) cout << "\t";
+				for(int i = 0; i <= s; i++) cout << "    ";
 			}
 			else {
-				for(int i = 0; i <= 6; i++) cout << "\t";
+				for(int i = 0; i <= 6; i++) cout << "    ";
 				for(int i = 6; i <= s; i++) cout << "..";
 			}		
-			cout << ent.path().stem().string() << "\\\t" << endl;											
+			cout << "<" << ent.path().stem().string() << ">" << endl;											
 			printContent1(directory_iterator(ent.path()), (s+1));			
 		}		
 		
@@ -68,7 +68,7 @@ void printContent1(directory_iterator iter, int s) {
 	}		
 
 	if(numFiles != 0) {
-		cout << size;
+		cout << setfill(' ') << setw(10) << size;
 		if(s <= 6) { 
 			for(int i = 0; i <= s; i++) cout << "\t";
 		}
@@ -87,24 +87,22 @@ void printContent2(directory_iterator iter, int s) {
 
 	while(iter != end(iter)) {
 		ent = *iter;						
-		cout << getSizeOf(ent);
-		
+		cout << setfill(' ') << setw(10) << getSizeOf(ent);			
+				
 		if(s <= 6) { 
-			for(int i = 0; i <= s; i++) cout << "\t";
+			for(int i = 0; i <= s; i++) cout << "    ";
 		}
 		else {
-			for(int i = 0; i <= 6; i++) cout << "\t";
+			for(int i = 0; i <= 6; i++) cout << "    ";
 			for(int i = 6; i <= s; i++) cout << "..";
-		}
-				
-		cout << ent.path().stem().string();		
+		}									
 		
-		if(ent.is_directory() != 1) {
-			cout << ent.path().extension().string() << endl;			
+		if(ent.is_directory() != 1) {		
+			cout << ent.path().stem().string() << ent.path().extension().string() << endl;				
 		}
 		
 		else if(ent.is_directory() == 1) {		
-			cout << "\\" << endl;			
+			cout << "<" << ent.path().stem().string() << ">" << endl;					
 			printContent2(directory_iterator(ent.path()), (s+1));			
 		}
 		
