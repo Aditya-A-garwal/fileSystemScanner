@@ -34,7 +34,44 @@ long getSizeOf(directory_entry entry) {
 
 
 void printContent0(directory_iterator iter, int s) {	
-			
+	directory_entry ent;
+	int size = 0;
+	int numFiles = 0;
+
+	while(iter != end(iter)) {
+		ent = *iter;											
+
+	    if(ent.is_directory() == 1) {				
+			cout << setfill(' ') << setw(10) << getSizeOf(ent);
+			if(s <= 6) { 
+				for(int i = 0; i <= s; i++) cout << "    ";
+			}
+			else {
+				for(int i = 0; i <= 6; i++) cout << "    ";
+				for(int i = 6; i <= s; i++) cout << "..";
+			}		
+			cout << "<" << ent.path().stem().string() << ">" << endl;													
+		}		
+		
+		else if(ent.is_directory() != 1) {
+			numFiles++;
+			size += ent.file_size();										
+		}			
+		
+		iter++;			
+	}		
+
+	if(numFiles != 0) {
+		cout << setfill(' ') << setw(10) << size;
+		if(s <= 6) { 
+			for(int i = 0; i <= s; i++) cout << "    ";
+		}
+		else {
+			for(int i = 0; i <= 6; i++) cout << "    ";
+			for(int i = 6; i <= s; i++) cout << "..";
+		}		
+		cout << "<" << numFiles << " files>\t" << endl;				
+	}			
 }
 
 
@@ -70,10 +107,10 @@ void printContent1(directory_iterator iter, int s) {
 	if(numFiles != 0) {
 		cout << setfill(' ') << setw(10) << size;
 		if(s <= 6) { 
-			for(int i = 0; i <= s; i++) cout << "\t";
+			for(int i = 0; i <= s; i++) cout << "    ";
 		}
 		else {
-			for(int i = 0; i <= 6; i++) cout << "\t";
+			for(int i = 0; i <= 6; i++) cout << "    ";
 			for(int i = 6; i <= s; i++) cout << "..";
 		}		
 		cout << "<" << numFiles << " files>\t" << endl;				
@@ -112,9 +149,8 @@ void printContent2(directory_iterator iter, int s) {
 
 int main(int argc, char* argv[]) {					
 	
-	cout << "\nFilesystem Scanner" << endl;					
-	cout << "www.dumblebots.com" << endl;					
-	cout << "Begin scanning\n\n" << endl;					
+	cout << "Filesystem Scanner v0.9" << endl;					
+	cout << "from dumblebots.com" << endl;					
 	
 	path p;
 	
@@ -124,7 +160,7 @@ int main(int argc, char* argv[]) {
 	cout << p.string() << "\\" << endl;					
 		
 	directory_iterator myDir(p, std::filesystem::directory_options::skip_permission_denied);		    
-	printContent2(myDir, 0);
+	printContent0(myDir, 0);
 	directory_entry ent;
 
 }
