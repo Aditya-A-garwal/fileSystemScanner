@@ -5,6 +5,10 @@
 using namespace std;
 using namespace filesystem;
 
+void prntLatest() {
+
+}
+
 long getSizeOf(directory_iterator iter) {
 	long size = 0;
 	
@@ -32,35 +36,43 @@ void printContent(directory_iterator iter, int s) {
 	directory_entry ent;
 
 	while(iter != end(iter)) {
-		ent = *iter;
-		int size = ent.file_size();
+		ent = *iter;			
+		int size = 0;
 		
-		if(ent.is_directory() == 1) { 
-			size = getSizeOf(directory_iterator(ent.path()));
+		if(s <= 6) { 
+			for(int i = 0; i <= s; i++) cout << "    ";
 		}
-		cout << size;
+		else {
+			for(int i = 0; i <= 6; i++) cout << "    ";
+			for(int i = 6; i <= s; i++) cout << "..";
+		}
+				
+		cout << ent.path().stem().string();		
 		
-		for(int i = 0; i <= s; i++) cout << "\t";
+		if(ent.is_directory() != 1) {
+			size = ent.file_size();							
+			cout << ent.path().extension().string() << "\t\t\t" << size << endl;			
+		}
 		
-		cout << ent.path() << endl;	
-		
-		if(ent.is_directory() == 1) { 
-			//cout << size << "\t\t\t";		
-			//cout << ent.path() << endl;	
-			printContent(directory_iterator(ent.path()), (s+1));
+		else if(ent.is_directory() == 1) {		
+			size = getSizeOf(directory_iterator(ent.path()));
+			cout << "\\\t\t\t" << size << endl;			
+			printContent(directory_iterator(ent.path()), (s+1));			
 		}
 		
 		iter++;		
 	}			
 }
 
-int main(int argc, char* argv[]) {				
+int main(int argc, char* argv[]) {					
 	
-	if(argc > 2) return 0;
+	cout << "\nFilesystem Scanner" << endl;					
+	cout << "www.dumblebots.com" << endl;					
+	cout << "Begin scanning\n\n" << endl;					
 	
-	cout << "printing contents of " << argv[1] << "\n" << endl;	
+	cout << argv[1] << endl;					
 		
-	directory_iterator myDir(argv[1]);		    
+	directory_iterator myDir(argv[1], std::filesystem::directory_options::skip_permission_denied);		    
 	printContent(myDir, 0);
 	directory_entry ent;
 
