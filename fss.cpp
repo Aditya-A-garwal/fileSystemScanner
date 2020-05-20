@@ -2,12 +2,17 @@
 #include <iostream>
 #include <filesystem>
 
-#define DEFAULT	0
-#define RECURSE	1	
-#define DIRFILE	2
+#define NUMDIGITS	13
 
 using namespace std;
 using namespace filesystem;
+
+void printIndent(int s) {
+	for(int i = 0; i <= min(s, 6); i++) cout << "    ";	
+	if(s > 6) {		
+		for(int i = 6; i <= s; i++) cout << "..";
+	}		
+}
 
 long getSizeOf(directory_entry entry) {	
 	
@@ -32,107 +37,44 @@ long getSizeOf(directory_entry entry) {
 	
 }
 
-
-void printContent0(directory_iterator iter, int s) {	
+void printContentA(directory_iterator iter, int s, bool recur) {	
 	directory_entry ent;
-	int size = 0;
-	int numFiles = 0;
+	unsigned long size = 0;
+	unsigned int numFiles = 0;
 
 	while(iter != end(iter)) {
 		ent = *iter;											
-
+		
 	    if(ent.is_directory() == 1) {				
-			cout << setfill(' ') << setw(10) << getSizeOf(ent);
-			if(s <= 6) { 
-				for(int i = 0; i <= s; i++) cout << "    ";
-			}
-			else {
-				for(int i = 0; i <= 6; i++) cout << "    ";
-				for(int i = 6; i <= s; i++) cout << "..";
-			}		
-			cout << "<" << ent.path().stem().string() << ">" << endl;													
+			cout << setfill(' ') << setw(NUMDIGITS) << getSizeOf(ent);
+			printIndent(s);	
+			cout << "<" << ent.path().stem().string() << ">" << endl;		
+			if(recur) printContentA(directory_iterator(ent.path()), (s+1), 1);
 		}		
 		
 		else if(ent.is_directory() != 1) {
 			numFiles++;
-			size += ent.file_size();										
-		}			
-		
-		iter++;			
-	}		
-
-	if(numFiles != 0) {
-		cout << setfill(' ') << setw(10) << size;
-		if(s <= 6) { 
-			for(int i = 0; i <= s; i++) cout << "    ";
+			size += ent.file_size();					
 		}
-		else {
-			for(int i = 0; i <= 6; i++) cout << "    ";
-			for(int i = 6; i <= s; i++) cout << "..";
-		}		
-		cout << "<" << numFiles << " files>\t" << endl;				
-	}			
-}
-
-
-void printContent1(directory_iterator iter, int s) {		
-	directory_entry ent;
-	int size = 0;
-	int numFiles = 0;
-
-	while(iter != end(iter)) {
-		ent = *iter;											
-
-	    if(ent.is_directory() == 1) {				
-			cout << setfill(' ') << setw(10) << getSizeOf(ent);
-			if(s <= 6) { 
-				for(int i = 0; i <= s; i++) cout << "    ";
-			}
-			else {
-				for(int i = 0; i <= 6; i++) cout << "    ";
-				for(int i = 6; i <= s; i++) cout << "..";
-			}		
-			cout << "<" << ent.path().stem().string() << ">" << endl;											
-			printContent1(directory_iterator(ent.path()), (s+1));			
-		}		
-		
-		else if(ent.is_directory() != 1) {
-			numFiles++;
-			size += ent.file_size();										
-		}			
-		
-		iter++;			
-	}		
-
-	if(numFiles != 0) {
-		cout << setfill(' ') << setw(10) << size;
-		if(s <= 6) { 
-			for(int i = 0; i <= s; i++) cout << "    ";
-		}
-		else {
-			for(int i = 0; i <= 6; i++) cout << "    ";
-			for(int i = 6; i <= s; i++) cout << "..";
-		}		
-		cout << "<" << numFiles << " files>\t" << endl;				
+		iter++;		
 	}
+	if(numFiles != 0) {
+		cout << setfill(' ') << setw(NUMDIGITS) << size;
+		printIndent(s);
+		cout << "<" << numFiles << " files>\t" << endl;				
+	}	
 }
 
-
-void printContent2(directory_iterator iter, int s) {	
+void printContentB(directory_iterator iter, int s) {	
 	
 	directory_entry ent;
 
 	while(iter != end(iter)) {
-		ent = *iter;						
-		cout << setfill(' ') << setw(10) << getSizeOf(ent);			
+		ent = *iter;	
+		iter++;
+		cout << setfill(' ') << setw(NUMDIGITS) << getSizeOf(ent);			
 				
-		if(s <= 6) { 
-			for(int i = 0; i <= s; i++) cout << "    ";
-		}
-		else {
-			for(int i = 0; i <= 6; i++) cout << "    ";
-			for(int i = 6; i <= s; i++) cout << "..";
-		}									
+		printIndent(s);									
 		
 		if(ent.is_directory() != 1) {		
 			cout << ent.path().stem().string() << ent.path().extension().string() << endl;				
@@ -140,27 +82,37 @@ void printContent2(directory_iterator iter, int s) {
 		
 		else if(ent.is_directory() == 1) {		
 			cout << "<" << ent.path().stem().string() << ">" << endl;					
-			printContent2(directory_iterator(ent.path()), (s+1));			
+			printContentB(directory_iterator(ent.path()), (s+1));			
 		}
-		
-		iter++;		
 	}			
 }
 
 int main(int argc, char* argv[]) {					
 	
-	cout << "Filesystem Scanner v0.9" << endl;					
-	cout << "from dumblebots.com" << endl;					
+	path p = ".";
+	int mode = 0;		
 	
-	path p;
+	if(argc >= 2) {
+		for(int i = 1; i < argc; i++) {					
+			if((argv[i])[0] == '-') {				
+				if((argv[i])[1] == 'f') mode = 1;
+				else if((argv[i])[1] == 'a') mode = 2;
+			}				
+			else {
+				p = argv[i];			
+			}
+		}			
+	}					
 	
-	if(argc == 1 || (argv[1])[0] == '-') p = ".";
-	else p = argv[1];
+	cout << "\nFilesystem Scanner v0.9" << endl;					
+	cout << "from dumblebots.com" << endl;							
 	
-	cout << p.string() << "\\" << endl;					
+	cout << absolute(p).string() << "\\" << endl;					
 		
-	directory_iterator myDir(p, std::filesystem::directory_options::skip_permission_denied);		    
-	printContent0(myDir, 0);
+	directory_iterator myDir(p);		    
+	
+	if(mode == 2) printContentB(myDir, 0);
+	else printContentA(myDir, 0, mode);
 	directory_entry ent;
 
 }
