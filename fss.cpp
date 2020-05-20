@@ -65,7 +65,7 @@ void printContentA(directory_iterator iter, int s, bool recur) {
 	}	
 }
 
-void printContentB(directory_iterator iter, int s) {	
+void printContentB(directory_iterator iter, int s, bool recur) {	
 	
 	directory_entry ent;
 
@@ -82,7 +82,7 @@ void printContentB(directory_iterator iter, int s) {
 		
 		else if(ent.is_directory() == 1) {		
 			cout << "<" << ent.path().stem().string() << ">" << endl;					
-			printContentB(directory_iterator(ent.path()), (s+1));			
+			if(recur) printContentB(directory_iterator(ent.path()), (s+1), 1);			
 		}
 	}			
 }
@@ -91,12 +91,23 @@ int main(int argc, char* argv[]) {
 	
 	path p = ".";
 	int mode = 0;		
+	bool isRecur = 0;
 	
 	if(argc >= 2) {
 		for(int i = 1; i < argc; i++) {					
 			if((argv[i])[0] == '-') {				
-				if((argv[i])[1] == 'f') mode = 1;
-				else if((argv[i])[1] == 'a') mode = 2;
+				if((argv[i])[1] == 'd') isRecur = 1;
+				else if((argv[i])[1] == 'f') mode = 1;
+				else if((argv[i])[1] == 'h') {
+					cout << "\nfss [-h] [-f] [-d] [path]\n";
+					cout << "fss [-h] [-d] [-f] [path]\n";
+					cout << "fss [-h] [-f] [path] [-d]\n";
+					cout << "fss [-h] [-d] [path] [-f]\n\n";					
+					cout << "-d recursively prints directories\n";
+					cout << "-f expands files\n";
+					cout << "-h for help\n" << endl;
+					return 0;
+				}
 			}				
 			else {
 				p = argv[i];			
@@ -111,8 +122,8 @@ int main(int argc, char* argv[]) {
 		
 	directory_iterator myDir(p);		    
 	
-	if(mode == 2) printContentB(myDir, 0);
-	else printContentA(myDir, 0, mode);
+	if(mode == 0) printContentA(myDir, 0, isRecur);
+	else if(mode == 1) printContentB(myDir, 0, isRecur);
 	directory_entry ent;
 
 }
