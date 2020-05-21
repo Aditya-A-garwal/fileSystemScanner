@@ -53,8 +53,10 @@ unsigned long getSizeOf(directory_entry entry)
 
 void printContent(path pPath, int pLevel, bool showDir, bool showFile) 
 {
-	unsigned long size = 0;
-	unsigned int numFiles = 0;
+	unsigned long	size = 0;
+	unsigned int	numFiles = 0;
+	unsigned int	numDirs = 0;
+	unsigned long	currSize = 0;
 	
 	directory_iterator 	iter(pPath);
 	directory_entry 	ent;
@@ -64,41 +66,54 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile)
 		ent = *iter;											
 		
 	    if(ent.is_directory() == 1) 
-		{		
-			printFileSize(getSizeOf(ent));
-			//cout << setfill(' ') << setw(NUMDIGITS) << prntNum(getSizeOf(ent));
+		{	
+			numDirs++;
+	
+			unsigned long	dSize = getSizeOf(ent);
+	
+			printFileSize(dSize);		
 			printIndent(pLevel);
 			cout << "<" << ent.path().stem().string() << ">" << endl;
+			
+			if(pLevel == 0)
+				currSize += dSize;
 			
 			if(showDir) 
 				printContent(ent.path(), pLevel+1, showDir, showFile);
 		}		
 		
 		else 
-		{
+		{			
+			numFiles++;
+			
+			unsigned long	fSize = ent.file_size();
+			
+			if(pLevel == 0) 
+				currSize += fSize;
+			
 			if(showFile)
-			{
-				printFileSize(ent.file_size());
-				//cout << setfill(' ') << setw(NUMDIGITS) << prntNum(ent.file_size());
+			{				
+				printFileSize(fSize);				
 				printIndent(pLevel);
-				cout << ent.path().stem().string() << ent.path().extension().string() << endl;				
+				cout << ent.path().stem().string() << ent.path().extension().string() << endl;							
 			}
-			else 
-			{
-				size += ent.file_size();
-				numFiles++;
-			}
+			else 		
+				size += fSize;							
 		}		
 		iter++;		
 	}
 	
 	if(numFiles != 0 && !showFile) 
 	{
-		printFileSize(size);
-		//cout << setfill(' ') << setw(NUMDIGITS) << prntNum(size);
+		printFileSize(size);		
 		printIndent(pLevel);
 		cout << "<" << numFiles << " files>\t" << endl;				
 	}	
+	
+	if(pLevel == 0) {
+		cout << "\n\tfiles found: " << numFiles << "\tdirectories found: " << numDirs;
+		cout << "\n\ttotal size: " << currSize << endl;
+	}
 }
 
 int main (int argc, char* argv[]) 
