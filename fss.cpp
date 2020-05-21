@@ -53,13 +53,11 @@ unsigned long getSizeOf(directory_entry entry)
 
 void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int maxLevel, char* mark*/) 
 {
-	unsigned long	fileSize = 0;
-	unsigned long	dirSize = 0;
+	long long	fileSize = 0;
+	long long	dirSize = 0;
 	
 	unsigned int	numFiles = 0;
-	unsigned int	numDirs = 0;
-	
-	unsigned long	currSize = 0;
+	unsigned int	numDirs = 0;	
 	
 	directory_iterator 	iter(pPath);
 	directory_entry 	ent;
