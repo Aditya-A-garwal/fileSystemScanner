@@ -51,11 +51,14 @@ unsigned long getSizeOf(directory_entry entry)
 	return size;
 }
 
-void printContent(path pPath, int pLevel, bool showDir, bool showFile) 
+void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int maxLevel, char* mark*/) 
 {
-	unsigned long	size = 0;
+	unsigned long	fileSize = 0;
+	unsigned long	dirSize = 0;
+	
 	unsigned int	numFiles = 0;
 	unsigned int	numDirs = 0;
+	
 	unsigned long	currSize = 0;
 	
 	directory_iterator 	iter(pPath);
@@ -65,18 +68,16 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile)
 	{
 		ent = *iter;											
 		
+		unsigned long	entrySize;
+		
 	    if(ent.is_directory() == 1) 
 		{	
-			numDirs++;
+			numDirs++;	
+			dirSize += getSizeOf(ent);
 	
-			unsigned long	dSize = getSizeOf(ent);
-	
-			printFileSize(dSize);		
+			printFileSize(entrySize);		
 			printIndent(pLevel);
-			cout << "<" << ent.path().stem().string() << ">" << endl;
-			
-			if(pLevel == 0)
-				currSize += dSize;
+			cout << "<" << ent.path().stem().string() << ">" << endl;						
 			
 			if(showDir) 
 				printContent(ent.path(), pLevel+1, showDir, showFile);
@@ -84,36 +85,30 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile)
 		
 		else 
 		{			
-			numFiles++;
-			
-			unsigned long	fSize = ent.file_size();
-			
-			if(pLevel == 0) 
-				currSize += fSize;
+			numFiles++;			
+			fileSize += ent.file_size();					
 			
 			if(showFile)
 			{				
-				printFileSize(fSize);				
+				printFileSize(entrySize);				
 				printIndent(pLevel);
-				cout << ent.path().stem().string() << ent.path().extension().string() << endl;							
-			}
-			else 		
-				size += fSize;							
+				cout << ent.path().stem().string() << ent.path().extension().string() << endl;											
+			}								
 		}		
+			
+			
 		iter++;		
 	}
 	
 	if(numFiles != 0 && !showFile) 
 	{
-		printFileSize(size);		
+		printFileSize(fileSize);		
 		printIndent(pLevel);
 		cout << "<" << numFiles << " files>\t" << endl;				
 	}	
 	
-	if(pLevel == 0) {
-		cout << "\n\tfiles found: " << numFiles << "\tdirectories found: " << numDirs;
-		cout << "\n\ttotal size: " << currSize << endl;
-	}
+	if(pLevel == 0) 
+		cout << "\n\ttotal files:\t\t" << numFiles << "\n\tsize of files:\t\t" << fileSize << "\n\ttotal directories:\t" << numDirs << "\n\tsize of directories:\t" << dirSize << "\n\ttotal size:\t\t" << (fileSize+dirSize) << endl; 		
 }
 
 int main (int argc, char* argv[]) 
