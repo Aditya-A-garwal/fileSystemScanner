@@ -2,22 +2,25 @@
 #include <iostream>
 #include <filesystem>
 
-#define NUMDIGITS	13
+#define NUMDIGITS	14
 
 using namespace std;
 using namespace filesystem;
 
-string prntNum(unsigned long num) {
-	string toRet = to_string(num);
-	int ctr = 0;
+void printFileSize(unsigned long pSize) 
+{
+	int    ctr = 0;
+	string toRet = to_string(pSize);
 	
-	for(int i = toRet.length()-1; i >= 0; i--) {
+	for(int i = toRet.length()-1; i >= 0; i--) 
+	{
 		if(ctr%3 == 0 && ctr>0) {
 			toRet = toRet.substr(0, (i+1)) + "," + toRet.substr((i+1), toRet.length());
 		}
 		ctr++;		
 	}
-	return toRet;
+	
+	cout << setfill(' ') << setw(NUMDIGITS) << toRet;
 }
 
 void printIndent(int s) 
@@ -30,51 +33,54 @@ void printIndent(int s)
 
 unsigned long getSizeOf(directory_entry entry) 
 {		
-	if(entry.is_directory() == 1) {
-		directory_iterator iter(entry.path());
+	directory_iterator iter(entry.path());
 				
-		long size = 0;
+	unsigned long size = 0;
 
-		while(iter != end(iter)) {
-			directory_entry ent = *iter;			
+	while(iter != end(iter)) 
+	{
+		directory_entry ent = *iter;			
 			
-			size += ent.file_size();
-			if(ent.is_directory() == 1) size += getSizeOf(ent);
+		size += ent.file_size();
+		if(ent.is_directory() == 1) 
+			size += getSizeOf(ent);
 			
-			iter++;		
-		}
-		
-		return size;
+		iter++;		
 	}
-	
-	else return entry.file_size();	
-	
+		
+	return size;
 }
 
-void printContent(directory_iterator iter, int s, bool showDir, bool showFile) {
+void printContent(path pPath, int pLevel, bool showDir, bool showFile) 
+{
 	unsigned long size = 0;
 	unsigned int numFiles = 0;
 	
-	directory_entry ent;
-
+	directory_iterator 	iter(pPath);
+	directory_entry 	ent;
+	
 	while(iter != end(iter)) 
 	{
 		ent = *iter;											
 		
 	    if(ent.is_directory() == 1) 
 		{		
-			cout << setfill(' ') << setw(NUMDIGITS) << prntNum(getSizeOf(ent));
-			printIndent(s);
+			printFileSize(getSizeOf(ent));
+			//cout << setfill(' ') << setw(NUMDIGITS) << prntNum(getSizeOf(ent));
+			printIndent(pLevel);
 			cout << "<" << ent.path().stem().string() << ">" << endl;
-			if(showDir) printContent(directory_iterator(ent.path()), (s+1), showDir, showFile);
+			
+			if(showDir) 
+				printContent(ent.path(), pLevel+1, showDir, showFile);
 		}		
 		
-		else if(ent.is_directory() != 1) 
+		else 
 		{
 			if(showFile)
 			{
-				cout << setfill(' ') << setw(NUMDIGITS) << prntNum(ent.file_size());
-				printIndent(s);
+				printFileSize(ent.file_size());
+				//cout << setfill(' ') << setw(NUMDIGITS) << prntNum(ent.file_size());
+				printIndent(pLevel);
 				cout << ent.path().stem().string() << ent.path().extension().string() << endl;				
 			}
 			else 
@@ -86,12 +92,13 @@ void printContent(directory_iterator iter, int s, bool showDir, bool showFile) {
 		iter++;		
 	}
 	
-	if(numFiles != 0 && !showFile) {
-		cout << setfill(' ') << setw(NUMDIGITS) << prntNum(size);
-		printIndent(s);
+	if(numFiles != 0 && !showFile) 
+	{
+		printFileSize(size);
+		//cout << setfill(' ') << setw(NUMDIGITS) << prntNum(size);
+		printIndent(pLevel);
 		cout << "<" << numFiles << " files>\t" << endl;				
 	}	
-	
 }
 
 int main (int argc, char* argv[]) 
@@ -100,6 +107,9 @@ int main (int argc, char* argv[])
 	bool	showFile = 0;			
 	
 	path	p = ".";	
+	
+	cout << "\nFilesystem Scanner v0.9" << endl;					
+	cout << "From dumblebots.com" << endl;								
 	
 	if (argc >= 2) 
 	{
@@ -134,13 +144,6 @@ int main (int argc, char* argv[])
 		}			
 	}					
 	
-	cout << "\nFilesystem Scanner v0.9" << endl;					
-	cout << "From dumblebots.com" << endl;								
-	
-	cout << absolute(p).string() << "\\" << endl;					
-		
-	directory_iterator myDir(p);		    
-		
-	printContent(myDir, 0, showDir, showFile);
-
+	cout << absolute(p).string() << endl;
+	printContent(p, 0, showDir, showFile);
 }
