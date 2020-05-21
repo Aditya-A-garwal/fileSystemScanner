@@ -66,14 +66,15 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 	
 	while(iter != end(iter)) 
 	{
-		ent = *iter;											
+		ent = *iter;															
 		
 		unsigned long	entrySize;
 		
 	    if(ent.is_directory() == 1) 
 		{	
-			numDirs++;	
-			dirSize += getSizeOf(ent);
+			numDirs++;
+			entrySize = getSizeOf(ent);
+			dirSize += entrySize;
 	
 			printFileSize(entrySize);		
 			printIndent(pLevel);
@@ -85,8 +86,9 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 		
 		else 
 		{			
-			numFiles++;			
-			fileSize += ent.file_size();					
+			numFiles++;	
+			entrySize = ent.file_size();
+			fileSize += entrySize;					
 			
 			if(showFile)
 			{				
