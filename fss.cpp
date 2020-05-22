@@ -40,13 +40,21 @@ void printFinalStats(unsigned long long val1, unsigned int val2, unsigned int va
 
 unsigned long long getSizeOf(directory_entry entry) 
 {		
-	directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
+
+	error_code ec;
+	ec.clear();
+	//directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
+	directory_iterator iter(entry.path(), ec);
+				
+	if(ec.value() != 0) {
+		cout << "*********getsize" << ec.value() << endl;			
+	}								
 				
 	unsigned long long size = 0;
 
 	while(iter != end(iter)) 
 	{
-		directory_entry ent = *iter;			
+		directory_entry ent = *iter;									
 					
 		size += ent.file_size();
 		
@@ -67,14 +75,21 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 	unsigned int	numFiles = 0;
 	unsigned int	numDirs = 0;	
 	
-	directory_iterator 	iter(pPath, directory_options::skip_permission_denied);
+	error_code ec;
+	ec.clear();
+	directory_iterator 	iter(pPath, ec);	
+	//directory_iterator 	iter(pPath, directory_options::skip_permission_denied);
 	directory_entry 	ent;
 	
+	if(ec.value() != 0) {
+		cout << pLevel << "*********printcontent" << ec.value() << endl;			
+	}
+		
 	while(iter != end(iter)) 
 	{
-		ent = *iter;															
+		ent = *iter;																	
 		
-		unsigned long	entrySize;
+		unsigned long	entrySize;			
 		
 	    if(ent.is_directory() == 1) 
 		{	
