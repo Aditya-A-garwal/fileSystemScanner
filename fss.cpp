@@ -2,12 +2,12 @@
 #include <iostream>
 #include <filesystem>
 
-#define NUMDIGITS	14
+#define NUMDIGITS	20
 
 using namespace std;
 using namespace filesystem;
 
-void printFileSize(unsigned long pSize) 
+string printFileSize(unsigned long long pSize) 
 {
 	int    ctr = 0;
 	string toRet = to_string(pSize);
@@ -18,9 +18,9 @@ void printFileSize(unsigned long pSize)
 			toRet = toRet.substr(0, (i+1)) + "," + toRet.substr((i+1), toRet.length());
 		}
 		ctr++;		
-	}
-	
-	cout << setfill(' ') << setw(NUMDIGITS) << toRet;
+	}	
+		
+	return toRet; 
 }
 
 void printIndent(int s) 
@@ -31,17 +31,18 @@ void printIndent(int s)
 	}		
 }
 
-unsigned long getSizeOf(directory_entry entry) 
+unsigned long long getSizeOf(directory_entry entry) 
 {		
-	directory_iterator iter(entry.path());
+	directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
 				
-	unsigned long size = 0;
+	unsigned long long size = 0;
 
 	while(iter != end(iter)) 
 	{
 		directory_entry ent = *iter;			
-			
+					
 		size += ent.file_size();
+		
 		if(ent.is_directory() == 1) 
 			size += getSizeOf(ent);
 			
@@ -53,13 +54,13 @@ unsigned long getSizeOf(directory_entry entry)
 
 void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int maxLevel, char* mark*/) 
 {
-	long long	fileSize = 0;
-	long long	dirSize = 0;
+	unsigned long long	fileSize = 0;
+	unsigned long long	dirSize = 0;
 	
 	unsigned int	numFiles = 0;
 	unsigned int	numDirs = 0;	
 	
-	directory_iterator 	iter(pPath);
+	directory_iterator 	iter(pPath, directory_options::skip_permission_denied);
 	directory_entry 	ent;
 	
 	while(iter != end(iter)) 
@@ -74,7 +75,7 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 			entrySize = getSizeOf(ent);
 			dirSize += entrySize;
 	
-			printFileSize(entrySize);		
+			cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);		
 			printIndent(pLevel);
 			cout << "<" << ent.path().stem().string() << ">" << endl;						
 			
@@ -90,7 +91,7 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 			
 			if(showFile)
 			{				
-				printFileSize(entrySize);				
+				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
 				printIndent(pLevel);
 				cout << ent.path().stem().string() << ent.path().extension().string() << endl;											
 			}								
@@ -100,15 +101,30 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 		iter++;		
 	}
 	
-	if(numFiles != 0 && !showFile) 
-	{
-		printFileSize(fileSize);		
+	if(numFiles != 0 && !showFile)
+	{				
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fileSize);		
 		printIndent(pLevel);
-		cout << "<" << numFiles << " files>\t" << endl;				
+		cout << "< " << numFiles << " files >" << endl;						
 	}	
 	
-	if(pLevel == 0) 
-		cout << "\n\ttotal files:\t\t" << numFiles << "\n\tsize of files:\t\t" << fileSize << "\n\ttotal directories:\t" << numDirs << "\n\tsize of directories:\t" << dirSize << "\n\ttotal size:\t\t" << (fileSize+dirSize) << endl; 		
+	if(pLevel == 0) {
+		
+		cout << "\n" << setfill(' ') << setw(NUMDIGITS) << printFileSize(fileSize);		
+		printIndent(pLevel);
+		cout << "< " << numFiles << " files >" << endl;	
+			
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(dirSize);		
+		printIndent(pLevel);
+		cout << "< " << numDirs << " sub-directories >" << endl;			
+		
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(dirSize+fileSize);		
+		printIndent(pLevel);
+		cout << "< " << (numDirs+numFiles) << " total entries >" << endl;			
+	}
+	
+	//if(pLevel == 0) 
+		//cout << "\n\ttotal files:" << setfill(' ') << setw(NUMDIGITS+8) << printFileSize(numFiles) << "\n\tsize of files:" << setfill(' ') << setw(NUMDIGITS+6) << printFileSize(fileSize) << "\n\ttotal directories:" << setfill(' ') << setw(NUMDIGITS+2) << printFileSize(numDirs) << "\n\tsize of directories:" << setfill(' ') << setw(NUMDIGITS) << printFileSize(dirSize) << "\n\ttotal size:" << setfill(' ') << setw(NUMDIGITS+9) << printFileSize(fileSize+dirSize) << endl; 		
 }
 
 int main (int argc, char* argv[]) 
