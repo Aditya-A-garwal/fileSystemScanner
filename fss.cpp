@@ -41,16 +41,17 @@ void printFinalStats(unsigned long long val1, unsigned int val2, unsigned int va
 unsigned long long getSizeOf(directory_entry entry) 
 {		
 
+	unsigned long long size = 0;
+
 	error_code ec;
 	ec.clear();
 	//directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
 	directory_iterator iter(entry.path(), ec);
 				
 	if(ec.value() != 0) {
-		cout << "*********getsize" << ec.value() << endl;			
-	}								
-				
-	unsigned long long size = 0;
+		cout << "********* error in getSize Path: "  << ec.path1() << "  " << ec.path2() << " error value: " << ec.value() << " error msg: " << ec.message() << endl;	
+		return	size;
+	}												
 
 	while(iter != end(iter)) 
 	{
@@ -82,7 +83,7 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 	directory_entry 	ent;
 	
 	if(ec.value() != 0) {
-		cout << pLevel << "*********printcontent" << ec.value() << endl;			
+		cout << "********* error in printContent Path: "  << pPath << " error value " << ec.value() << endl;	
 	}
 		
 	while(iter != end(iter)) 
