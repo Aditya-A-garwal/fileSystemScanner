@@ -46,10 +46,12 @@ unsigned long long getSizeOf(directory_entry entry)
 	error_code ec;
 	ec.clear();
 	//directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
+	
+	try {
 	directory_iterator iter(entry.path(), ec);
 				
 	if(ec.value() != 0) {
-		cout << "********* error in getSize Path: "  << ec.path1() << "  " << ec.path2() << " error value: " << ec.value() << " error msg: " << ec.message() << endl;	
+		cout << "********* error in getSize Path: "  << entry.path() << " error value: " << ec.value() << " error msg: " << ec.message() << endl;	
 		return	size;
 	}												
 
@@ -64,7 +66,12 @@ unsigned long long getSizeOf(directory_entry entry)
 			
 		iter++;		
 	}
+	}
+	
+	catch(filesystem::filesystem_error fe) {
+		cout << "Exception caught: " << fe.what() << endl;
 		
+	}
 	return size;
 }
 
