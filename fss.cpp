@@ -31,6 +31,13 @@ void printIndent(int s)
 	}		
 }
 
+
+void printFinalStats(unsigned long long val1, unsigned int val2, unsigned int val3, char* id) {
+	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(val2);		
+	printIndent(val3);
+	cout << "<" << val1 << " " << string(id) << ">" << endl;			
+}
+
 unsigned long long getSizeOf(directory_entry entry) 
 {		
 	directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
@@ -77,7 +84,7 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 	
 			cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);		
 			printIndent(pLevel);
-			cout << "<" << ent.path().stem().string() << ">" << endl;						
+			cout << "<" << ent.path().stem().string() << ">" << endl;				
 			
 			if(showDir) 
 				printContent(ent.path(), pLevel+1, showDir, showFile);
@@ -101,30 +108,16 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 		iter++;		
 	}
 	
-	if(numFiles != 0 && !showFile)
+	if(numFiles != 0 && !showFile)	
+		printFinalStats(numFiles, fileSize, pLevel, "files");	
+	
+	if(pLevel == 0) 
 	{				
-		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fileSize);		
-		printIndent(pLevel);
-		cout << "< " << numFiles << " files >" << endl;						
-	}	
-	
-	if(pLevel == 0) {
-		
-		cout << "\n" << setfill(' ') << setw(NUMDIGITS) << printFileSize(fileSize);		
-		printIndent(pLevel);
-		cout << "< " << numFiles << " files >" << endl;	
-			
-		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(dirSize);		
-		printIndent(pLevel);
-		cout << "< " << numDirs << " sub-directories >" << endl;			
-		
-		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(dirSize+fileSize);		
-		printIndent(pLevel);
-		cout << "< " << (numDirs+numFiles) << " total entries >" << endl;			
+		cout << "\n";
+		printFinalStats(numFiles, fileSize, pLevel, "files");
+		printFinalStats(numDirs, dirSize, pLevel, "sub-directories");
+		printFinalStats(numFiles + numDirs, fileSize+dirSize, pLevel, "total entries");								
 	}
-	
-	//if(pLevel == 0) 
-		//cout << "\n\ttotal files:" << setfill(' ') << setw(NUMDIGITS+8) << printFileSize(numFiles) << "\n\tsize of files:" << setfill(' ') << setw(NUMDIGITS+6) << printFileSize(fileSize) << "\n\ttotal directories:" << setfill(' ') << setw(NUMDIGITS+2) << printFileSize(numDirs) << "\n\tsize of directories:" << setfill(' ') << setw(NUMDIGITS) << printFileSize(dirSize) << "\n\ttotal size:" << setfill(' ') << setw(NUMDIGITS+9) << printFileSize(fileSize+dirSize) << endl; 		
 }
 
 int main (int argc, char* argv[]) 
