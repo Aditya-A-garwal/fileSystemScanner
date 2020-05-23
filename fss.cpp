@@ -42,12 +42,8 @@ unsigned long long getSizeOf(directory_entry entry)
 {		
 
 	unsigned long long size = 0;
-
 	error_code ec;
-	ec.clear();
-	//directory_iterator iter(entry.path(), directory_options::skip_permission_denied);
 	
-	try {
 	directory_iterator iter(entry.path(), ec);
 				
 	if(ec.value() != 0) {
@@ -57,21 +53,33 @@ unsigned long long getSizeOf(directory_entry entry)
 
 	while(iter != end(iter)) 
 	{
-		directory_entry ent = *iter;									
-					
-		size += ent.file_size();
+		directory_entry ent = *iter;	
+		iter++;
+		ec.clear();		
 		
-		if(ent.is_directory() == 1) 
+		bool isDirectory = ent.is_directory(ec);
+		
+		if(ec.value() != 0) 
+		{
+			cout << "********* error in dir check Path: "  << ent.path() << " error value: " << ec.value() << " error msg: " << ec.message() << endl;											
+			isDirectory = false;
+		}		
+		
+		if(isDirectory == 1) 
 			size += getSizeOf(ent);
-			
-		iter++;		
-	}
-	}
-	
-	catch(filesystem::filesystem_error fe) {
-		cout << "Exception caught: " << fe.what() << endl;
 		
-	}
+		else 
+		{
+			unsigned long long s = file_size(ent.path(), ec);
+			
+			if(ec.value() != 0) 
+				cout << "********* error in file size1 Path: "  << ent.path() << " error value: " << ec.value() << " error msg: " << ec.message() << endl;								
+			
+			else 
+				size += s;
+						
+		}									
+	}	
 	return size;
 }
 
@@ -83,23 +91,32 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 	unsigned int	numFiles = 0;
 	unsigned int	numDirs = 0;	
 	
-	error_code ec;
-	ec.clear();
-	directory_iterator 	iter(pPath, ec);	
-	//directory_iterator 	iter(pPath, directory_options::skip_permission_denied);
-	directory_entry 	ent;
+	error_code ec;	
+	directory_iterator 	iter(pPath, ec);		
 	
-	if(ec.value() != 0) {
+	if(ec.value() != 0) {		
 		cout << "********* error in printContent Path: "  << pPath << " error value " << ec.value() << endl;	
+		return;
 	}
+	
+	directory_entry 	ent;	
 		
 	while(iter != end(iter)) 
 	{
-		ent = *iter;																	
+		ent = *iter;					
+		iter++;		
 		
 		unsigned long	entrySize;			
 		
-	    if(ent.is_directory() == 1) 
+		bool isDirectory = ent.is_directory(ec);
+		
+		if(ec.value() != 0) 
+		{
+			cout << "********* error in dir check Path: "  << ent.path() << " error value: " << ec.value() << " error msg: " << ec.message() << endl;											
+			isDirectory = false;
+		}
+		
+	    if(isDirectory == 1) 
 		{	
 			numDirs++;
 			entrySize = getSizeOf(ent);
@@ -114,21 +131,28 @@ void printContent(path pPath, int pLevel, bool showDir, bool showFile/*, int max
 		}		
 		
 		else 
-		{			
-			numFiles++;	
-			entrySize = ent.file_size();
-			fileSize += entrySize;					
+		{									
+			entrySize = file_size(ent.path(), ec);
 			
-			if(showFile)
-			{				
-				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
-				printIndent(pLevel);
-				cout << ent.path().stem().string() << ent.path().extension().string() << endl;											
-			}								
-		}		
+			if(ec.value() != 0) 
+			{ 	
+				cout << "********* error in file size2 Path: "  << ent.path() << " error value " << ec.value() << endl;	
+				ec.clear();
+			}
+			else {
+				fileSize += entrySize;					
+				numFiles++;			
+				
+				if(showFile)
+				{				
+					cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
+					printIndent(pLevel);
+					cout << ent.path().stem().string() << ent.path().extension().string() << endl;											
+				}		
+			}			
+		}					
 			
-			
-		iter++;		
+		//iter++;		
 	}
 	
 	if(numFiles != 0 && !showFile)	
