@@ -175,8 +175,8 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, int pLe
 			if(pFss_info.u_show_file)
 			{						
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
-				printIndent(u_level);				
-				cout << entry.path().filename().string() << endl;							
+				printIndent(u_level);		
+				cout << entry.path().string() << endl;							
 				//if(entry.path().has_filename()) cout << entry.path().filename().string() << endl;											
 				//else cout << "XXX" << endl; 
 				//cout << "XXX" << endl; 
@@ -217,7 +217,7 @@ int main (int argc, char* argv[])
 	
 	p = ".";	
 	
-	if (argc >= 2) 
+	if (argc >= 2)
 	{
 		for(int i = 1; i < argc; i++) 
 		{					
