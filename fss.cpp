@@ -1,6 +1,8 @@
 #include <string>
 #include <iostream>
 #include <filesystem>
+#include <fcntl.h>
+#include <io.h>
 
 #define NUMDIGITS	20
 
@@ -177,6 +179,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, int pLe
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
 				printIndent(u_level);		
 				cout << entry.path().string() << endl;							
+				cout << entry.path().u8string() << endl;							
 				//if(entry.path().has_filename()) cout << entry.path().filename().string() << endl;											
 				//else cout << "XXX" << endl; 
 				//cout << "XXX" << endl; 
@@ -206,6 +209,15 @@ int main (int argc, char* argv[])
 {			
 	struct FSS_Info	fss_info;		
 	path	p;	
+	
+#ifdef _MSC_VER
+    _setmode(_fileno(stderr), _O_WTEXT);
+#else
+    std::setlocale(LC_ALL, "");
+    std::locale::global(std::locale(""));
+    std::cout.imbue(std::locale());
+    std::wcerr.imbue(std::locale());
+#endif	
 	
 	cout << "\nFilesystem Scanner v0.9" << endl;					
 	cout << "From dumblebots.com" << endl;								
