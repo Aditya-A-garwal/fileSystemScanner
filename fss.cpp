@@ -50,19 +50,21 @@ void printFinalStats(long long val1, unsigned int val2, unsigned int val3, char*
 	cout << "<" << val1 << " " << string(id) << ">" << endl;			
 }
 
-long long size_of_dir(path pPath) 
+long long size_of_dir(path pPath, error_code & ecode) 
 {		
 	long long vSize = 0;
 	
-	error_code ec;
-	
+	error_code ec;	
 	directory_iterator vIter(pPath, ec);			
 	
 	if(ec.value() != 0) 
 	{				
 		cout << "error in size_of_dir: " << ec.value() << "  " << ec.message() << endl;
+		ecode = ec;
 		return 0;
 	}
+	
+	ecode.clear();
 
 	while(vIter != end(vIter)) 
 	{
@@ -72,14 +74,20 @@ long long size_of_dir(path pPath)
 		bool isDir = entry.is_directory(ec); 
 		if(ec.value() != 0) 
 		{				
-			cout << "error in size_of_dir: " << ec.value() << "  " << ec.message() << endl;
+			cout << "error in size_of_dir: " << ec.value() << "  " << ec.message() << endl;			
 			ec.clear();
 			continue;			
 		}
 		
 		if(isDir) 
 		{
-			vSize += size_of_dir(entry);
+			vSize += size_of_dir(entry, ecode);
+			if(ecode.value() != 0) 
+			{				
+				cout << "error in size_of_dir: " << ecode.value() << "  " << ecode.message() << endl;
+				ecode.clear();
+				continue;			
+			}
 			continue;
 		}
 		
@@ -139,7 +147,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, int pLe
 	    if(isDir == true) 
 		{	
 			numDirs++;
-			entrySize = size_of_dir(entry.path());
+			entrySize = size_of_dir(entry.path(), ec);
 			dirSize += entrySize;
 	
 			cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);		
@@ -151,8 +159,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, int pLe
 
 			continue;
 		}		
-		
-		
+				
 		bool isFile = entry.is_regular_file(ec);
 		if(ec.value() != 0) {
 			cout << "error in scan_path: " << ec.value() << "  " << ec.message() << endl;
@@ -178,11 +185,9 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, int pLe
 			{						
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
 				printIndent(u_level);		
-				cout << entry.path().string() << endl;							
-				cout << entry.path().u8string() << endl;							
-				//if(entry.path().has_filename()) cout << entry.path().filename().string() << endl;											
-				//else cout << "XXX" << endl; 
-				//cout << "XXX" << endl; 
+				//cout << entry.path().string() << endl;							
+				wcout << (entry.path().filename().wstring());				
+				cout << "XXX" << endl; 
 			}		
 
 			continue;
@@ -193,7 +198,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, int pLe
 		cout << "fs caught: " << fs.what() << endl;				
 	}
 	
-	if(numFiles != 0 && pFss_info.u_show_file)	
+	if(numFiles != 0 && !pFss_info.u_show_file)	
 		printFinalStats(numFiles, fileSize, u_level, "files");	
 	
 	if(u_level == 0) 
@@ -209,7 +214,7 @@ int main (int argc, char* argv[])
 {			
 	struct FSS_Info	fss_info;		
 	path	p;	
-	
+/*	
 #ifdef _MSC_VER
     _setmode(_fileno(stderr), _O_WTEXT);
 #else
@@ -218,7 +223,7 @@ int main (int argc, char* argv[])
     std::cout.imbue(std::locale());
     std::wcerr.imbue(std::locale());
 #endif	
-	
+*/	
 	cout << "\nFilesystem Scanner v0.9" << endl;					
 	cout << "From dumblebots.com" << endl;								
 		
