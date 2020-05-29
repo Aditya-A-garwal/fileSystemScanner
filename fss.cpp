@@ -64,12 +64,13 @@ void printErr(error_code & ec, directory_entry & entry)
 
 long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_info) 
 {		
-	long long vSize = 0;
+	long long 	vSize = 0;
+	error_code 	ec;	
 	
-	error_code ec;	
 	directory_iterator vIter(pPath, ec);			
 	
-	pFss_info->u_total_dir++;
+	if(pFss_info) 
+		pFss_info->u_total_dir++;
 	
 	if(ec.value() != 0) 
 	{					
@@ -86,8 +87,10 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		bool isDir = entry.is_directory(ec); 
 		if(ec.value() != 0) 
-		{							
-			pFss_info->u_invalid_entry++;			
+		{			
+			if(pFss_info) 	
+				pFss_info->u_invalid_entry++;			
+			
 			printErr(ec, entry);
 			ec.clear();
 			continue;			
@@ -98,7 +101,9 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 			vSize += size_of_dir(entry, ec, pFss_info);
 			if(ec.value() != 0) 
 			{				
-				pFss_info->u_inaccessible_dir++;				
+				if(pFss_info) 
+					pFss_info->u_inaccessible_dir++;				
+				
 				printErr(ec, entry);
 				ec.clear();
 				continue;			
@@ -109,7 +114,9 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		bool isFile = entry.is_regular_file(ec); 
 		if(ec.value() != 0) 
 		{		
-			pFss_info->u_invalid_entry++;			
+			if(pFss_info) 
+				pFss_info->u_invalid_entry++;			
+			
 			printErr(ec, entry);
 			ec.clear();
 			continue;			
@@ -117,10 +124,15 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		if(isFile)		
 		{	
-			pFss_info->u_total_file++;
+			if(pFss_info) 
+				pFss_info->u_total_file++;
+			
 			long long sizeBuff = entry.file_size(ec);
-			if(ec.value() != 0) {
-				pFss_info->u_inaccessible_file++;				
+			if(ec.value() != 0) 
+			{
+				if(pFss_info) 	
+					pFss_info->u_inaccessible_file++;				
+				
 				printErr(ec, entry);
 				ec.clear();
 				continue;
