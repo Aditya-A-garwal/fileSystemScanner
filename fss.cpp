@@ -145,15 +145,19 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 
 void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool showDir, bool showFile/*, int maxLevel, char* mark*/) 
 {
-	long long	fileSize = 0;
-	long long	dirSize = 0;
-	
+	bool			isFile;
+	bool			isDir;
 	unsigned int	numFiles = 0;
-	unsigned int	numDirs = 0;	
+	unsigned int	numDirs = 0;
+
+	long long		fileSize = 0;
+	long long		dirSize = 0;
 	
-	error_code ec;
-	directory_iterator 	vIter(pPath, ec);			
+	long long		entrySize = 0;						
+	
+	error_code 			ec;
 	directory_entry 	entry;	
+	directory_iterator 	vIter(pPath, ec);			
 	
 	if(ec.value() != 0) {
 		if(u_level == 0) 
@@ -166,26 +170,33 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 		entry = *vIter;					
 		vIter++;		
 		
-		bool isDir = entry.is_directory(ec);
-		if(ec.value() != 0) {
-			if(u_level == 0) 
+		isDir = entry.is_directory(ec);
+		if(ec.value() != 0) 
+		{
+			if(u_level == 0) {
 				pFss_info.u_inaccessible_dir++;			
+				printErr(ec, entry);
+			}
 			ec.clear();
 			continue;
 		}
 		
-		unsigned long	entrySize;						
-				
 	    if(isDir == true) 
 		{	
 			numDirs++;	
-			if(u_level == 0) entrySize = size_of_dir(entry.path(), ec, &pFss_info);
-			else entrySize = size_of_dir(entry.path(), ec, NULL);
+			
+			if(u_level == 0) 
+				entrySize = size_of_dir(entry.path(), ec, &pFss_info);
+			else 
+				entrySize = size_of_dir(entry.path(), ec, NULL);
 	
 			if(ec.value() != 0) 
 			{				
 				if(u_level == 0) 
+				{
 					pFss_info.u_inaccessible_dir++;	
+					printErr(ec, entry);
+				}
 				ec.clear();
 			}
 			
@@ -201,8 +212,10 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 			continue;
 		}		
 				
-		bool isFile = entry.is_regular_file(ec);
-		if(ec.value() != 0) {
+		isFile = entry.is_regular_file(ec);
+		
+		if(ec.value() != 0) 
+		{
 			if(u_level == 0) 
 				pFss_info.u_invalid_entry++;			
 			ec.clear();
@@ -220,7 +233,10 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 			if(ec.value() != 0) 
 			{
 				if(u_level == 0) 
+				{
 					pFss_info.u_inaccessible_file++;				
+					printErr(ec, entry);
+				}
 				ec.clear();
 				entrySize = 0;				
 			}
