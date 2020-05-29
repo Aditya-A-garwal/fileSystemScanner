@@ -62,70 +62,6 @@ void printErr(error_code & ec, directory_entry & entry)
 	
 }
 
-/*long long size_of_dir(path pPath, error_code & ecode) 
-{		
-	long long vSize = 0;
-	
-	error_code ec;	
-	directory_iterator vIter(pPath, ec);			
-	
-	if(ec.value() != 0) 
-	{				
-		cout << "***** size_of_dir : creating directory iterator: " << ec.value() << "  " << ec.message() << endl;
-		ecode = ec;
-		return 0;
-	}
-	
-	ecode.clear();
-
-	while(vIter != end(vIter)) 
-	{
-		directory_entry entry = *vIter;	
-		vIter++;		
-		
-		bool isDir = entry.is_directory(ec); 
-		if(ec.value() != 0) 
-		{				
-			cout << "***** size_of_dir : checking isDir observer: " << ec.value() << "  " << ec.message() << endl;			
-			ec.clear();
-			continue;			
-		}
-		
-		if(isDir) 
-		{
-			vSize += size_of_dir(entry, ec);
-			if(ec.value() != 0) 
-			{				
-				cout << "***** size_of_dir : reading dir size: " << ec.value() << "  " << ec.message() << endl;
-				ec.clear();
-				continue;			
-			}
-			continue;
-		}
-		
-		bool isFile = entry.is_regular_file(ec); 
-		if(ec.value() != 0) 
-		{				
-			cout << "***** size_of_dir : reading file size: " << ec.value() << "  " << ec.message() << endl;
-			ec.clear();
-			continue;			
-		}
-		
-		if(isFile)		
-		{	
-			long long sizeBuff = entry.file_size(ec);
-			if(ec.value() != 0) {
-				cout << "***** size_of_dir : checking isFile observer: " << ec.value() << "  " << ec.message() << endl;
-				ec.clear();
-				continue;
-			}			
-			vSize += sizeBuff;									
-		}
-	}	
-	return vSize;
-}
-*/
-
 long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_info) 
 {		
 	long long vSize = 0;
@@ -209,7 +145,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 	
 	if(ec.value() != 0) {
 		if(u_level == 0) 
-			++pFss_info.u_inaccessible_dir;
+			pFss_info.u_inaccessible_dir;
 		return;
 	}
 
@@ -221,7 +157,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 		bool isDir = entry.is_directory(ec);
 		if(ec.value() != 0) {
 			if(u_level == 0) 
-				pFss_info.u_invalid_entry++;			
+				pFss_info.u_inaccessible_dir++;			
 			ec.clear();
 			continue;
 		}
@@ -236,6 +172,8 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 	
 			if(ec.value() != 0) 
 			{				
+				if(u_level == 0) 
+					pFss_info.u_inaccessible_dir++;	
 				ec.clear();
 			}
 			
