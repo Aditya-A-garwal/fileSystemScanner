@@ -20,25 +20,22 @@ struct FSS_Info
 	unsigned long      	u_inaccessible_file;
 	unsigned long      	u_inaccessible_dir;
 	unsigned long      	u_invalid_entry;	
+	
 	unsigned long		u_file;
 	unsigned long		u_dir;
+	unsigned long		u_file_size;
+	unsigned long		u_dir_size;
 };
 
-string printFileSize(long long pSize) 
+string printFileSize(long long value) 
 {
-	int    ctr = 0;
-	string toRet = to_string(pSize);
-	
-	
-	for(int i = toRet.length()-1; i >= 0; i--) 
-	{
-		if(ctr%3 == 0 && ctr>0) {
-			toRet = toRet.substr(0, (i+1)) + "," + toRet.substr((i+1), toRet.length());
-		}
-		ctr++;		
-	}	
-	
-	return toRet; 
+	string numWithCommas = to_string(value);
+	int insertPosition = numWithCommas.length() - 3;
+	while (insertPosition > 0) {
+		numWithCommas.insert(insertPosition, ",");
+		insertPosition-=3;
+	}
+	return numWithCommas;
 }
 
 void printIndent(int s) 
@@ -63,14 +60,17 @@ void printErr(error_code & ec, directory_entry & entry)
 }
 
 long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_info) 
-{		
-	long long 	vSize = 0;
+{	
+	unsigned long	total_file = 0;
+	unsigned long	total_dir = 0;
+	
+	unsigned long	inaccessible_file = 0;
+	unsigned long	inaccessible_dir = 0;
+	
+	long long 		vSize = 0;
 	error_code 	ec;	
 	
 	directory_iterator vIter(pPath, ec);			
-	
-	if(pFss_info) 
-		pFss_info->u_total_dir++;
 	
 	if(ec.value() != 0) 
 	{					
@@ -87,7 +87,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		bool isDir = entry.is_directory(ec); 
 		if(ec.value() != 0) 
-		{			
+		{						
 			if(pFss_info) {
 				pFss_info->u_invalid_entry++;						
 				if(pFss_info->u_show_err)
@@ -99,6 +99,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		if(isDir) 
 		{
+			total_dir++;
 			vSize += size_of_dir(entry, ec, pFss_info);
 			if(ec.value() != 0) 
 			{				
@@ -127,8 +128,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		if(isFile)		
 		{	
-			if(pFss_info) 
-				pFss_info->u_total_file++;
+			total_file++;
 			
 			long long sizeBuff = entry.file_size(ec);
 			if(ec.value() != 0) 
@@ -143,16 +143,27 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 			}			
 			vSize += sizeBuff;									
 		}
-	}	
+	}
+
+	if(pFss_info)
+	{
+		pFss_info->u_total_file += total_file;
+		pFss_info->u_total_dir += total_dir;
+	}
+	
 	return vSize;
 }
 
-void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool showDir, bool showFile/*, int maxLevel, char* mark*/) 
+void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info) 
 {
 	bool			isFile;
 	bool			isDir;
 	unsigned int	numFiles = 0;
 	unsigned int	numDirs = 0;
+	unsigned long 	totalFiles = 0;
+	unsigned long 	totalDirs = 0;
+	
+	unsigned int	invalidEntries = 0;
 
 	long long		fileSize = 0;
 	long long		dirSize = 0;
@@ -178,7 +189,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 		if(ec.value() != 0) 
 		{
 			if(u_level == 0) {
-				pFss_info.u_inaccessible_dir++;			
+				pFss_info.u_invalid_entry++;			
 				if(pFss_info.u_show_err)
 					printErr(ec, entry);
 			}
@@ -190,8 +201,10 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 		{	
 			numDirs++;	
 			
-			if(u_level == 0) 
+			if(u_level == 0) {
 				entrySize = size_of_dir(entry.path(), ec, &pFss_info);
+				totalDirs++;
+			}
 			else 
 				entrySize = size_of_dir(entry.path(), ec, NULL);
 	
@@ -230,8 +243,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 		
 		if(isFile == true)
 		{				
-			if(u_level == 0) 
-				pFss_info.u_total_file++;
+			totalFiles++;
 	
 			numFiles++;
 			entrySize = entry.file_size(ec);			
@@ -266,11 +278,13 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info/*, bool sh
 		printFinalStats(numFiles, fileSize, u_level, "files");	
 	
 	if(u_level == 0) 
-	{				
-		cout << "\n";		
-		printFinalStats(numFiles, fileSize, u_level, "files");
-		printFinalStats(numDirs, dirSize, u_level, "sub-directories");
-		printFinalStats(numFiles + numDirs, fileSize+dirSize, u_level, "total entries");								
+	{	
+		pFss_info.u_total_file += totalFiles;
+		pFss_info.u_total_dir += totalDirs;
+		pFss_info.u_file = numFiles;
+		pFss_info.u_dir = numDirs;
+		pFss_info.u_file_size = fileSize;
+		pFss_info.u_dir_size = dirSize;								
 	}
 }
 
@@ -278,16 +292,7 @@ int main (int argc, char* argv[])
 {			
 	struct FSS_Info	fss_info;		
 	path	p;	
-/*	
-#ifdef _MSC_VER
-    _setmode(_fileno(stderr), _O_WTEXT);
-#else
-    std::setlocale(LC_ALL, "");
-    std::locale::global(std::locale(""));
-    std::cout.imbue(std::locale());
-    std::wcerr.imbue(std::locale());
-#endif	
-*/	
+
 	cout << "\nFilesystem Scanner v0.9" << endl;					
 	cout << "From dumblebots.com" << endl;								
 		
@@ -300,7 +305,7 @@ int main (int argc, char* argv[])
 	fss_info.u_inaccessible_file	= 0;
 	fss_info.u_inaccessible_dir		= 0;
 	fss_info.u_invalid_entry		= 0;
-	fss_info.u_dir		= 0;
+	fss_info.u_dir					= 0;
 	fss_info.u_file					= 0;
 	
 	p = ".";	
@@ -347,11 +352,24 @@ int main (int argc, char* argv[])
 	
 	cout << endl;
 	
-	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file);		
-	printIndent(0);
-	cout << "files traversed" << " (" << fss_info.u_inaccessible_file << " innaccessible)" << endl;
+	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size);			
+	cout << "\t<" << fss_info.u_file << " files>" << endl;		
 	
-	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_dir);		
-	printIndent(0);
-	cout << "directories traversed" << " (" << fss_info.u_inaccessible_dir << " innaccessible)" << endl;	
+	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_dir_size);			
+	cout << "\t<" << fss_info.u_dir << " sub-directories>" << endl;		
+	
+	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size+fss_info.u_dir_size);			
+	cout << "\t<" << fss_info.u_file+fss_info.u_dir << " total entries>" << endl;		
+	
+	cout << endl;
+	
+	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file);		
+	cout << "\tfiles traversed";
+	if(fss_info.u_inaccessible_file != 0) 
+		cout << " (" << fss_info.u_inaccessible_file << " inaccessible)";	
+	
+	cout << "\n" << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_dir);			
+	cout << "\tdirectories traversed";
+	if(fss_info.u_inaccessible_dir != 0) 
+		cout << " (" << fss_info.u_inaccessible_dir << " inaccessible)";	
 }
