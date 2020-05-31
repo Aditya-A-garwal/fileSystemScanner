@@ -14,6 +14,7 @@ struct FSS_Info
 	bool 		u_show_dir;
 	bool 		u_show_file;
 	bool		u_show_err;
+	bool		u_apply_filter;
 	
 	unsigned long      	u_total_file;
 	unsigned long      	u_total_dir;
@@ -25,6 +26,8 @@ struct FSS_Info
 	unsigned long		u_dir;
 	unsigned long		u_file_size;
 	unsigned long		u_dir_size;
+	
+	char*				u_filter;
 };
 
 string printFileSize(long long value) 
@@ -168,7 +171,7 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info)
 	long long		fileSize = 0;
 	long long		dirSize = 0;
 	
-	long long		entrySize = 0;						
+	long long		entrySize = 0;		
 	
 	error_code 			ec;
 	directory_entry 	entry;	
@@ -201,7 +204,8 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info)
 		{	
 			numDirs++;	
 			
-			if(u_level == 0) {
+			if(u_level == 0) 
+			{
 				entrySize = size_of_dir(entry.path(), ec, &pFss_info);
 				totalDirs++;
 			}
@@ -290,6 +294,9 @@ void scan_path(path & pPath, int u_level, struct FSS_Info & pFss_info)
 
 int main (int argc, char* argv[]) 
 {			
+
+	bool path_set = false;
+	
 	struct FSS_Info	fss_info;		
 	path	p;	
 
@@ -299,6 +306,7 @@ int main (int argc, char* argv[])
 	fss_info.u_show_dir 			= false;
 	fss_info.u_show_file 			= false;	
 	fss_info.u_show_err 			= false;	
+	fss_info.u_apply_filter 		= false;	
 	
 	fss_info.u_total_file			= 0;
 	fss_info.u_total_dir			= 0;
@@ -307,6 +315,7 @@ int main (int argc, char* argv[])
 	fss_info.u_invalid_entry		= 0;
 	fss_info.u_dir					= 0;
 	fss_info.u_file					= 0;
+	fss_info.u_apply_filter			= NULL;
 	
 	p = ".";	
 	
@@ -325,7 +334,7 @@ int main (int argc, char* argv[])
 				else 
 				{
 					cout << "\nSyntax:\n";
-					cout << "fss [-flag(s)] [path]\n";
+					cout << "fss [-flag(s)] [path] [filter]\n";
 					
 					cout << "\nFlags:\n";					
 					cout << "-d show sub-directories\n";
@@ -343,9 +352,20 @@ int main (int argc, char* argv[])
 				}
 			}				
 			else 
-				p = argv[i];						
+			{
+				if(!path_set)
+				{	
+					p = argv[i];						
+					path_set = true;
+				}
+				else 
+				{
+					fss_info.u_filter = argv[i];		
+					fss_info.u_apply_filter = true;					
+				}
+			}
 		}			
-	}						
+	}								
 	
 	cout << absolute(p).string() << endl;
 	scan_path(p, 0, fss_info);
