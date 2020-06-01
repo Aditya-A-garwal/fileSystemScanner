@@ -295,6 +295,8 @@ void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info)
 {
 	bool			isFile;
 	bool			isDir;
+	unsigned int	numFiles = 0;
+	unsigned int	numDirs = 0;
 	unsigned long 	totalFiles = 0;
 	unsigned long 	totalDirs = 0;
 	
