@@ -295,8 +295,6 @@ void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info)
 {
 	bool			isFile;
 	bool			isDir;
-	unsigned int	numFiles = 0;
-	unsigned int	numDirs = 0;
 	unsigned long 	totalFiles = 0;
 	unsigned long 	totalDirs = 0;
 	
@@ -337,13 +335,13 @@ void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info)
 		}
 		
 	    if(isDir == true) 
-		{	
-			numDirs++;				
-			if(u_level == 0) 			
-				totalDirs++;			
+		{					
+			totalDirs++;			
+			pFss_info.u_total_dir++;		
 	
 			if(my_find(entry.path().filename().string(), pFss_info.u_filter)) 
 			{
+				numDirs++;					
 				if(u_level == 0) 							
 					entrySize = size_of_dir(entry.path(), ec, &pFss_info);
 				else  							
@@ -361,7 +359,8 @@ void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info)
 				}
 				
 				dirSize += entrySize;							
-		
+				pFss_info.u_dir_size += entrySize;		
+				
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);		
 				printIndent(0);
 				cout << "<" << entry.path().filename().string() << ">" << "\t" << entry.path().parent_path().string() << endl;											
@@ -371,13 +370,13 @@ void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info)
 		}			
 		
 		if(isFile == true)
-		{			
-			numFiles++;
-			if(u_level == 0)
-				totalFiles++;
+		{						
+			totalFiles++;
+			pFss_info.u_total_file++;
 	
 			if(my_find(entry.path().filename().string(), pFss_info.u_filter)) 
 			{
+				numFiles++;			
 				entrySize = entry.file_size(ec);			
 			
 				if(ec.value() != 0) 
@@ -392,25 +391,18 @@ void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info)
 					entrySize = 0;				
 				}
 				
-				fileSize += entrySize;										
+				fileSize += entrySize;			
+				pFss_info.u_file_size += entrySize;				
 								
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
 				printIndent(0);												
 				cout << entry.path().filename().string() << "\t" << entry.path().parent_path().string() << endl;													
-			}								
-			continue;
+			}											
 		}						
-	}		
-	
-	if(u_level == 0) 
-	{	
-		pFss_info.u_total_file += totalFiles;
-		pFss_info.u_total_dir += totalDirs;
-		pFss_info.u_file = numFiles;
-		pFss_info.u_dir = numDirs;
-		pFss_info.u_file_size = fileSize;
-		pFss_info.u_dir_size = dirSize;								
-	}
+	}							
+		
+	pFss_info.u_file += numFiles;
+	pFss_info.u_dir += numDirs;					
 }
 
 int main (int argc, char* argv[]) 
