@@ -168,20 +168,15 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 {
 	bool			isFile;
 	bool			isDir;
-	unsigned int	numFiles = 0;
-	unsigned int	numDirs = 0;
-	unsigned long 	totalFiles = 0;
-	unsigned long 	totalDirs = 0;
-	
-	unsigned int	invalidEntries = 0;
+	unsigned long	numFiles = 0;
+	unsigned long	numDirs = 0;
 
 	long long		fileSize = 0;
 	long long		dirSize = 0;
 	
 	long long		entrySize = 0;		
 	
-	error_code 			ec;
-	directory_entry 	entry;	
+	error_code 			ec;	
 	directory_iterator 	vIter(pPath, ec);			
 	
 	if(ec.value() != 0) {
@@ -192,6 +187,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 
 	while(vIter != end(vIter)) 
 	{
+		directory_entry 	entry;
+		
 		entry = *vIter;					
 		vIter++;		
 		
@@ -218,7 +215,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				if(u_level == 0) 
 				{
 					entrySize = size_of_dir(entry.path(), ec, &pFss_info);
-					totalDirs++;
+					pFss_info.u_total_dir++;
 				}
 				else 
 					entrySize = size_of_dir(entry.path(), ec, NULL);
@@ -242,7 +239,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 			}
 			else if(my_find(entry.path().filename().string(), pFss_info.u_filter))
 			{						
-				
+				pFss_info.u_dir++;
 				entrySize = size_of_dir(entry.path(), ec, NULL);
 				if(ec.value() != 0) 
 				{				
@@ -269,7 +266,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 		{		
 			if(!pFss_info.u_apply_filter)
 			{
-				totalFiles++;
+				pFss_info.u_total_file++;
 	
 				numFiles++;
 				entrySize = entry.file_size(ec);			
@@ -299,6 +296,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 			}
 			else if(my_find(entry.path().filename().string(), pFss_info.u_filter) && pFss_info.u_show_file)
 			{
+				pFss_info.u_file++;
 				entrySize = entry.file_size(ec);
 				if(ec.value() != 0) 
 				{				
@@ -321,10 +319,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 	if(numFiles != 0 && !pFss_info.u_show_file)	
 		printFinalStats(numFiles, fileSize, u_level, "files");	
 	
-	if(u_level == 0) 
-	{	
-		pFss_info.u_total_file += totalFiles;
-		pFss_info.u_total_dir += totalDirs;
+	if(u_level == 0 && !pFss_info.u_apply_filter) 
+	{			
 		pFss_info.u_file = numFiles;
 		pFss_info.u_dir = numDirs;
 		pFss_info.u_file_size = fileSize;
@@ -332,128 +328,10 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 	}
 }
 
-/*void scan_path_filter(path pPath, int u_level, struct FSS_Info & pFss_info) 
-{
-	bool			isFile;
-	bool			isDir;
-	unsigned int	numFiles = 0;
-	unsigned int	numDirs = 0;
-	unsigned long 	totalFiles = 0;
-	unsigned long 	totalDirs = 0;
-	
-	unsigned int	invalidEntries = 0;
-
-	long long		fileSize = 0;
-	long long		dirSize = 0;
-	
-	long long		entrySize = 0;		
-	
-	error_code 			ec;
-	directory_entry 	entry;	
-	directory_iterator 	vIter(pPath, ec);			
-	
-	if(ec.value() != 0) {
-		if(u_level == 0) 
-			pFss_info.u_inaccessible_dir;
-		return;
-	}
-
-	while(vIter != end(vIter)) 
-	{
-		entry = *vIter;					
-		vIter++;		
-		
-		isDir = entry.is_directory(ec);
-		isFile = entry.is_regular_file(ec);
-		
-		if(ec.value() != 0) 
-		{
-			if(u_level == 0) {
-				pFss_info.u_invalid_entry++;			
-				if(pFss_info.u_show_err)
-					printErr(ec, entry);
-			}
-			ec.clear();
-			continue;
-		}
-		
-	    if(isDir == true) 
-		{					
-			totalDirs++;			
-			pFss_info.u_total_dir++;		
-	
-			if(my_find(entry.path().filename().string(), pFss_info.u_filter)) 
-			{
-				numDirs++;					
-				if(u_level == 0) 							
-					entrySize = size_of_dir(entry.path(), ec, &pFss_info);
-				else  							
-					entrySize = size_of_dir(entry.path(), ec, NULL);
-				
-				if(ec.value() != 0) 
-				{				
-					if(u_level == 0) 
-					{
-						pFss_info.u_inaccessible_dir++;	
-						if(pFss_info.u_show_err)
-							printErr(ec, entry);
-					}
-					ec.clear();
-				}
-				
-				dirSize += entrySize;							
-				pFss_info.u_dir_size += entrySize;		
-				
-				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);		
-				printIndent(0);
-				cout << "<" << entry.path().filename().string() << ">" << "\t" << entry.path().parent_path().string() << endl;											
-			}		
-			if(pFss_info.u_show_dir)
-				scan_path_filter(entry.path(), u_level+1, pFss_info);				
-			continue;
-		}			
-		
-		if(isFile == true)
-		{						
-			totalFiles++;
-			pFss_info.u_total_file++;
-	
-			if(my_find(entry.path().filename().string(), pFss_info.u_filter)) 
-			{
-				numFiles++;			
-				entrySize = entry.file_size(ec);			
-			
-				if(ec.value() != 0) 
-				{
-					if(u_level == 0) 
-					{
-						if(pFss_info.u_show_err)
-							pFss_info.u_inaccessible_file++;				
-						printErr(ec, entry);
-					}
-					ec.clear();
-					entrySize = 0;				
-				}
-				
-				fileSize += entrySize;			
-				pFss_info.u_file_size += entrySize;				
-								
-				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);				
-				printIndent(0);												
-				cout << entry.path().filename().string() << "\t" << entry.path().parent_path().string() << endl;													
-			}											
-		}						
-	}							
-		
-	pFss_info.u_file += numFiles;
-	pFss_info.u_dir += numDirs;					
-}*/
-
 int main (int argc, char* argv[]) 
 {			
 
-	bool path_set = false;
-	bool apply_filter = false;
+	bool path_set = false;	
 	
 	struct FSS_Info	fss_info;		
 	path	p;	
@@ -526,29 +404,36 @@ int main (int argc, char* argv[])
 	}								
 	
 	cout << absolute(p).string() << endl;
-	if(!apply_filter) scan_path(p, 0, fss_info);
-	else scan_path(p, 0, fss_info);
+	scan_path(p, 0, fss_info);	
+
+	if(!fss_info.u_apply_filter)
+	{	
+		cout << "\nLocal Statistics of " << absolute(p).string() << endl;
+		
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size);			
+		cout << "\t<" << fss_info.u_file << " files>" << endl;		
+		
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_dir_size);			
+		cout << "\t<" << fss_info.u_dir << " sub-directories>" << endl;		
+		
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size+fss_info.u_dir_size);			
+		cout << "\t<" << fss_info.u_file+fss_info.u_dir << " total entries>" << endl;		
+		
+		cout << "\nGlobal Statistics of " << absolute(p).string() << endl;
 	
-	cout << endl;
-	
-	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size);			
-	cout << "\t<" << fss_info.u_file << " files>" << endl;		
-	
-	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_dir_size);			
-	cout << "\t<" << fss_info.u_dir << " sub-directories>" << endl;		
-	
-	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size+fss_info.u_dir_size);			
-	cout << "\t<" << fss_info.u_file+fss_info.u_dir << " total entries>" << endl;		
-	
-	cout << endl;
-	
-	cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file);		
-	cout << "\tfiles traversed";
-	if(fss_info.u_inaccessible_file != 0) 
-		cout << " (" << fss_info.u_inaccessible_file << " inaccessible)";	
-	
-	cout << "\n" << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_dir);			
-	cout << "\tdirectories traversed";
-	if(fss_info.u_inaccessible_dir != 0) 
-		cout << " (" << fss_info.u_inaccessible_dir << " inaccessible)";	
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file);		
+		cout << "\tfiles traversed";
+		if(fss_info.u_inaccessible_file != 0) 
+			cout << " (" << fss_info.u_inaccessible_file << " inaccessible)";	
+		
+		cout << "\n" << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_dir);			
+		cout << "\tdirectories traversed";
+		if(fss_info.u_inaccessible_dir != 0) 
+			cout << " (" << fss_info.u_inaccessible_dir << " inaccessible)";	
+	}	
+	else 
+	{
+		cout << "files found: " << fss_info.u_file << endl;
+		cout << "directories found: " << fss_info.u_dir << endl;
+	}
 }
