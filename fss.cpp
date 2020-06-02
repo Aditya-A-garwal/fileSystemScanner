@@ -243,12 +243,9 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				entrySize = size_of_dir(entry.path(), ec, NULL);
 				if(ec.value() != 0) 
 				{				
-					if(u_level == 0) 
-					{
-						pFss_info.u_inaccessible_dir++;	
-						if(pFss_info.u_show_err)
-							printErr(ec, entry);
-					}
+					if(u_level == 0 && pFss_info.u_show_err) 								
+						printErr(ec, entry);
+					
 					ec.clear();
 				}
 				
@@ -302,12 +299,9 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				entrySize = entry.file_size(ec);
 				if(ec.value() != 0) 
 				{				
-					if(u_level == 0) 
-					{
-						pFss_info.u_inaccessible_dir++;	
-						if(pFss_info.u_show_err)
-							printErr(ec, entry);
-					}
+					if(u_level == 0 && pFss_info.u_show_err) 										
+						printErr(ec, entry);					
+					
 					ec.clear();
 				}
 				
@@ -347,6 +341,9 @@ int main (int argc, char* argv[])
 	fss_info.u_show_file 			= false;	
 	fss_info.u_show_err 			= false;		
 	fss_info.u_apply_filter			= false;		
+	
+	fss_info.u_file_size			= 0;
+	fss_info.u_dir_size				= 0;
 	
 	fss_info.u_total_file			= 0;
 	fss_info.u_total_dir			= 0;
