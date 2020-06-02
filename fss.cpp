@@ -252,6 +252,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 					ec.clear();
 				}
 				
+				pFss_info.u_dir_size += entrySize; 
+				
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);						
 				cout << "\t<" << entry.path().filename().string() << ">\t" << entry.path().parent_path().string() << endl;		
 		
@@ -308,6 +310,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 					}
 					ec.clear();
 				}
+				
+				pFss_info.u_file_size += entrySize; 
 				
 				cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(entrySize);						
 				cout << "\t" << entry.path().filename().string() << "\t" << entry.path().parent_path().string() << endl;		
@@ -433,7 +437,11 @@ int main (int argc, char* argv[])
 	}	
 	else 
 	{
-		cout << "files found: " << fss_info.u_file << endl;
-		cout << "directories found: " << fss_info.u_dir << endl;
+		cout << endl;
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_file_size);			
+		cout << "\t<" << fss_info.u_file << " files found>" << endl;		
+		
+		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_dir_size);			
+		cout << "\t<" << fss_info.u_dir << " directories found>" << endl;				
 	}
 }
