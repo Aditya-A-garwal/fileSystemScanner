@@ -277,7 +277,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 
 				continue;
 			}
-			else if(my_find(entry.path().filename().string(), pFss_info.u_filter) && pFss_info.u_show_file)
+			else if(pFss_info.u_show_file && my_find(entry.path().filename().string(), pFss_info.u_filter))
 			{
 				pFss_info.u_files_in_path++;
 				entrySize = entry.file_size(ec);
@@ -395,9 +395,12 @@ int main (int argc, char* argv[])
 	cout << absolute(p).string() << endl;
 	scan_path(p, 0, fss_info);	
 
+
+	cout << endl;
+	
 	if(!fss_info.u_apply_filter)
 	{	
-		cout << "\nLocal Statistics of " << absolute(p).string() << endl;
+		cout << "Local Statistics of " << absolute(p).string() << endl;
 		
 		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file_size);			
 		cout << "\t<" << fss_info.u_files_in_path << " files>" << endl;		
@@ -422,11 +425,20 @@ int main (int argc, char* argv[])
 	}	
 	else 
 	{
-		cout << endl;
-		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file_size);			
-		cout << "\t<" << fss_info.u_files_in_path << " files found>" << endl;		
+		if(fss_info.u_files_in_path != 0) 
+		{			
+			cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_file_size);			
+			cout << "\t<" << fss_info.u_files_in_path << " files found>" << endl;		
+		}	
+		else if(fss_info.u_show_file)		
+			cout << "\t\t\tNo files found with given filter" << endl;
 		
-		cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_dir_size);			
-		cout << "\t<" << fss_info.u_dirs_in_path << " directories found>" << endl;				
+		if(fss_info.u_dirs_in_path != 0) 
+		{
+			cout << setfill(' ') << setw(NUMDIGITS) << printFileSize(fss_info.u_total_dir_size);			
+			cout << "\t<" << fss_info.u_dirs_in_path << " directories found>" << endl;				
+		}
+		else 		
+			cout << "\t\t\tNo directories found with given filter" << endl;
 	}
 }
