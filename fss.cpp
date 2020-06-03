@@ -32,16 +32,16 @@ struct FSS_Info
 	char*				u_filter;
 };
 
-string format_number(long long value) 
+string format_number(long long val) 
 {
-	string numWithCommas = to_string(value);
-	int insertPosition = numWithCommas.length() - 3;
-	while (insertPosition > 0) 
+	string formatted_num = to_string(val);
+	int insert_pos = formatted_num.length() - 3;
+	while (insert_pos > 0) 
 	{
-		numWithCommas.insert(insertPosition, ",");
-		insertPosition-=3;
+		formatted_num.insert(insert_pos, ",");
+		insert_pos -= 3;
 	}
-	return numWithCommas;
+	return formatted_num;
 }
 
 void print_indent(int s) 
@@ -88,8 +88,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 
 	while(path_iterator != end(path_iterator)) 
 	{
-		directory_entry entry = *path_iterator;	
-		path_iterator++;		
+		directory_entry entry = *path_iterator++;			
 		
 		bool is_dir = entry.is_directory(ec); 
 		bool is_file = entry.is_regular_file(ec); 		
@@ -175,8 +174,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 	{
 		directory_entry 	entry;
 		
-		entry = *path_iterator;					
-		path_iterator++;		
+		entry = *path_iterator++;							
 		
 		bool is_dir = entry.is_directory(ec);
 		bool is_file = entry.is_regular_file(ec);
