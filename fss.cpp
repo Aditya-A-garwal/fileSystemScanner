@@ -107,9 +107,9 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		if(is_dir) 
 		{
 			total_dirs++;
-			entry_size += size_of_dir(entry, ec, pFss_info);
+			entry_size = size_of_dir(entry, ec, pFss_info);
 			if(ec.value() != 0) 
-			{				
+			{								
 				if(pFss_info) {
 					pFss_info->u_inaccessible_dir++;							
 					if(pFss_info->u_show_err)
