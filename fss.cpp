@@ -178,6 +178,7 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 		
 		bool is_dir = entry.is_directory(ec);
 		bool is_file = entry.is_regular_file(ec);
+		bool is_sym = entry.is_symlink(ec);
 		
 		if(ec.value() != 0) 
 		{
@@ -243,10 +244,10 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				scan_path(entry.path(), u_level+1, pFss_info);
 
 			continue;
-		}									
+		}											
 		
 		if(is_file == true)
-		{		
+		{					
 			if(!pFss_info.u_apply_filter)
 			{
 				pFss_info.u_total_files++;
@@ -272,20 +273,22 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				{						
 					cout << setfill(' ') << setw(NUMDIGITS) << format_number(entry_size);				
 					print_indent(u_level);												
-					wcout << entry.path().filename().wstring() << L"\n";									
+					wcout << entry.path().filename().wstring();									
+					if(is_sym) 					
+						wcout << L"[SYMLINK to " << read_symlink(entry).wstring() << L"]";																															
+					cout << endl;
 				}		
 
 				continue;
 			}
-			else if(pFss_info.u_show_file && my_find(entry.path().filename().string(), pFss_info.u_filter))
+			else if(pFss_info.u_show_file && (my_find(entry.path().filename().string(), pFss_info.u_filter) || (is_sym?my_find(read_symlink(entry).string(), pFss_info.u_filter):false)))
 			{
 				pFss_info.u_files_in_path++;
 				entry_size = entry.file_size(ec);
 				if(ec.value() != 0) 
 				{				
 					if(u_level == 0 && pFss_info.u_show_err) 										
-						printErr(ec, entry);					
-					
+						printErr(ec, entry);										
 					ec.clear();
 				}
 				
@@ -295,7 +298,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				wcout << L"\t" << entry.path().filename().wstring() << L"\t" << entry.path().parent_path().wstring() << L"\n";		
 			}
 			continue;			
-		}						
+		}	
+		
 	}	
 	
 	if(numFiles != 0 && !pFss_info.u_show_file)	
