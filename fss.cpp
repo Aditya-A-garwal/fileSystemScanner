@@ -298,12 +298,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				{						
 					cout << setfill(' ') << setw(NUMDIGITS) << format_number(entry_size);				
 					print_indent(u_level);												
-					wcout << entry.path().filename().wstring();									
-					if(is_sym) 					
-						wcout << L"[SYMLINK to " << read_symlink(entry).wstring() << L"]";																															
-					cout << endl;
-				}		
-
+					wcout << entry.path().filename().wstring() << L"\n";
+				}
 				continue;
 			}			
 			else if(pFss_info.u_show_file)
@@ -324,8 +320,9 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 					cout << setfill(' ') << setw(NUMDIGITS) << format_number(entry_size);						
 					wcout << L"\t" << entry.path().filename().wstring() << L"\t" << entry.path().parent_path().wstring() << L"\n";		
 				}
-				else if(is_sym && my_find(read_symlink(entry).string(), pFss_info.u_filter))
+				if(is_sym && my_find(read_symlink(entry).string(), pFss_info.u_filter))
 				{
+					pFss_info.u_symlinks_in_path++;
 					cout << "             SYMLINK\t";						
 					wcout << entry.path().filename().wstring() << L" [" << read_symlink(entry).wstring() << L"]\n";					
 				}		
@@ -335,11 +332,20 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 		
 	}	
 	
-	if(numFiles != 0 && !pFss_info.u_show_file)	
-	{		
-		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fileSize);		
-		print_indent(u_level);
-		cout << "<" << numFiles << " files>" << endl;	
+	if(!pFss_info.u_show_file)	
+	{	
+		if(numFiles != 0) 
+		{
+			cout << setfill(' ') << setw(NUMDIGITS) << format_number(fileSize);		
+			print_indent(u_level);
+			cout << "<" << numFiles << " files>" << endl;	
+		}
+		if(numSymlinks != 0) 
+		{
+			cout << "                    ";		
+			print_indent(u_level);
+			cout << "<" << numSymlinks << " symlinks>" << endl;	
+		}
 	}
 	
 	if(u_level == 0 && !pFss_info.u_apply_filter) 
@@ -446,7 +452,7 @@ int main (int argc, char* argv[])
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_file_size);			
 		cout << "\t<" << format_number(fss_info.u_files_in_path) << " files>" << endl;		
 		
-		cout << setfill(' ') << setw(NUMDIGITS) << format_number(0);			
+		cout << "                   -";			
 		cout << "\t<" << format_number(fss_info.u_symlinks_in_path) << " symlinks>" << endl;		
 		
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_dir_size);			
@@ -472,13 +478,24 @@ int main (int argc, char* argv[])
 	}	
 	else 
 	{
-		if(fss_info.u_files_in_path != 0) 
-		{			
-			cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_file_size);			
-			cout << "\t<" << fss_info.u_files_in_path << " files found>" << endl;		
-		}	
-		else if(fss_info.u_show_file)		
-			cout << "\t\t\tNo files found with given filter" << endl;
+		if(fss_info.u_show_file)
+		{
+			if(fss_info.u_files_in_path != 0) 
+			{			
+				cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_file_size);			
+				cout << "\t<" << fss_info.u_files_in_path << " files found>" << endl;		
+			}	
+			else 			
+				cout << "\t\t\tNo files found with given filter" << endl;
+			
+			if(fss_info.u_symlinks_in_path != 0) 
+			{			
+				cout << "                    ";			
+				cout << "\t<" << fss_info.u_symlinks_in_path << " symlinks found>" << endl;		
+			}	
+			else 				
+				cout << "\t\t\tNo symlinks found with given filter" << endl;
+		}									
 		
 		if(fss_info.u_dirs_in_path != 0) 
 		{
