@@ -18,6 +18,7 @@ struct FSS_Info
 	
 	unsigned long      	u_total_files;
 	unsigned long      	u_total_dirs;	
+	unsigned long      	u_total_symlinks;	
 	
 	unsigned long      	u_inaccessible_file;
 	unsigned long      	u_inaccessible_dir;
@@ -25,6 +26,7 @@ struct FSS_Info
 	
 	unsigned long		u_files_in_path;
 	unsigned long		u_dirs_in_path;	
+	unsigned long		u_symlinks_in_path;	
 	
 	long long			u_total_dir_size;
 	long long			u_total_file_size;
@@ -74,6 +76,7 @@ bool my_find(string c1, char * c2)
 long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_info) 
 {	
 	unsigned long	total_files		= 0;
+	unsigned long	total_symlinks	= 0;
 	unsigned long	total_dirs 		= 0;
 	
 	long long 		size_of_path	= 0;
@@ -92,6 +95,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		bool is_dir = entry.is_directory(ec); 
 		bool is_file = entry.is_regular_file(ec); 		
+		bool is_sym = entry.is_symlink(ec); 	
 		
 		if(ec.value() != 0) 
 		{		
@@ -124,6 +128,12 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 		
 		if(is_file)		
 		{	
+			if(is_sym)
+			{
+				total_symlinks++;
+				continue;
+			}
+			
 			total_files++;
 			
 			entry_size = entry.file_size(ec);
@@ -145,6 +155,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 	if(pFss_info)
 	{
 		pFss_info->u_total_files += total_files;
+		pFss_info->u_total_symlinks += total_symlinks;
 		pFss_info->u_total_dirs += total_dirs;
 	}
 	
@@ -154,6 +165,7 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info) 
 {
 	unsigned long	numFiles = 0;
+	unsigned long	numSymlinks = 0;
 	unsigned long	numDirs = 0;
 
 	long long		fileSize = 0;
@@ -250,6 +262,19 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 		{					
 			if(!pFss_info.u_apply_filter)
 			{
+				if(is_sym)
+				{
+					numSymlinks++;
+					if(u_level == 0) 
+						pFss_info.u_total_symlinks++;
+					
+					if(pFss_info.u_show_file)
+					{						
+						cout << "             SYMLINK\t";										
+						wcout << entry.path().filename().wstring() << L" [" << read_symlink(entry).wstring() << L"]\n";
+					}
+					continue;
+				}
 				pFss_info.u_total_files++;
 	
 				numFiles++;
@@ -280,23 +305,31 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				}		
 
 				continue;
-			}
-			else if(pFss_info.u_show_file && (my_find(entry.path().filename().string(), pFss_info.u_filter) || (is_sym?my_find(read_symlink(entry).string(), pFss_info.u_filter):false)))
+			}			
+			else if(pFss_info.u_show_file)
 			{
-				pFss_info.u_files_in_path++;
-				entry_size = entry.file_size(ec);
-				if(ec.value() != 0) 
-				{				
-					if(u_level == 0 && pFss_info.u_show_err) 										
-						printErr(ec, entry);										
-					ec.clear();
+				if(my_find(entry.path().filename().string(), pFss_info.u_filter))
+				{
+					pFss_info.u_files_in_path++;
+					entry_size = entry.file_size(ec);
+					if(ec.value() != 0) 
+					{				
+						if(u_level == 0 && pFss_info.u_show_err) 										
+							printErr(ec, entry);										
+						ec.clear();
+					}
+					
+					pFss_info.u_total_file_size += entry_size; 
+					
+					cout << setfill(' ') << setw(NUMDIGITS) << format_number(entry_size);						
+					wcout << L"\t" << entry.path().filename().wstring() << L"\t" << entry.path().parent_path().wstring() << L"\n";		
 				}
-				
-				pFss_info.u_total_file_size += entry_size; 
-				
-				cout << setfill(' ') << setw(NUMDIGITS) << format_number(entry_size);						
-				wcout << L"\t" << entry.path().filename().wstring() << L"\t" << entry.path().parent_path().wstring() << L"\n";		
-			}
+				else if(is_sym && my_find(read_symlink(entry).string(), pFss_info.u_filter))
+				{
+					cout << "             SYMLINK\t";						
+					wcout << entry.path().filename().wstring() << L" [" << read_symlink(entry).wstring() << L"]\n";					
+				}		
+			}			
 			continue;			
 		}	
 		
@@ -313,6 +346,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 	{			
 		pFss_info.u_files_in_path = numFiles;
 		pFss_info.u_dirs_in_path = numDirs;
+		pFss_info.u_symlinks_in_path = numSymlinks;
+		
 		pFss_info.u_total_file_size = fileSize;
 		pFss_info.u_total_dir_size = dirSize;								
 	}
@@ -338,12 +373,14 @@ int main (int argc, char* argv[])
 	fss_info.u_total_dir_size		= 0;
 	
 	fss_info.u_total_files			= 0;
+	fss_info.u_total_symlinks		= 0;
 	fss_info.u_total_dirs			= 0;
 	fss_info.u_inaccessible_file	= 0;
 	fss_info.u_inaccessible_dir		= 0;
 	fss_info.u_invalid_entry		= 0;
 	fss_info.u_dirs_in_path			= 0;
 	fss_info.u_files_in_path		= 0;	
+	fss_info.u_symlinks_in_path		= 0;	
 	fss_info.u_filter				= NULL;
 	
 	p = ".";	
@@ -407,25 +444,31 @@ int main (int argc, char* argv[])
 		cout << "Local Statistics of " << absolute(p).string() << endl;
 		
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_file_size);			
-		cout << "\t<" << fss_info.u_files_in_path << " files>" << endl;		
+		cout << "\t<" << format_number(fss_info.u_files_in_path) << " files>" << endl;		
+		
+		cout << setfill(' ') << setw(NUMDIGITS) << format_number(0);			
+		cout << "\t<" << format_number(fss_info.u_symlinks_in_path) << " symlinks>" << endl;		
 		
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_dir_size);			
-		cout << "\t<" << fss_info.u_dirs_in_path << " sub-directories>" << endl;		
+		cout << "\t<" << format_number(fss_info.u_dirs_in_path) << " sub-directories>" << endl;		
 		
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_file_size+fss_info.u_total_dir_size);			
-		cout << "\t<" << fss_info.u_files_in_path+fss_info.u_dirs_in_path << " total entries>" << endl;		
+		cout << "\t<" << format_number(fss_info.u_files_in_path+fss_info.u_dirs_in_path+fss_info.u_symlinks_in_path) << " total entries>" << endl;		
 		
 		cout << "\nGlobal Statistics of " << absolute(p).string() << endl;
 	
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_files);		
 		cout << "\tfiles traversed";
 		if(fss_info.u_inaccessible_file != 0) 
-			cout << " (" << fss_info.u_inaccessible_file << " inaccessible)";	
+			cout << " (" << format_number(fss_info.u_inaccessible_file) << " inaccessible)";	
+		
+		cout << "\n" << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_symlinks);		
+		cout << "\tsymlinks traversed";
 		
 		cout << "\n" << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_dirs);			
 		cout << "\tdirectories traversed";
 		if(fss_info.u_inaccessible_dir != 0) 
-			cout << " (" << fss_info.u_inaccessible_dir << " inaccessible)";	
+			cout << " (" << format_number(fss_info.u_inaccessible_dir) << " inaccessible)";	
 	}	
 	else 
 	{
