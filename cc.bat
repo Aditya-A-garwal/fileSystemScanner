@@ -1,0 +1,1 @@
+cl fss.cpp /std:c++latest /O2 /EHsc
