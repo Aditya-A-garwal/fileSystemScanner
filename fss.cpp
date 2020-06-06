@@ -31,7 +31,7 @@ struct FSS_Info
 	long long			u_total_dir_size;
 	long long			u_total_file_size;
 	
-	char*				u_filter;
+	string				u_filter;
 };
 
 string format_number(long long val) 
@@ -64,14 +64,28 @@ void printErr(error_code & ec, directory_entry & entry)
 	
 }
 
-bool my_find(string c1, char * c2)
-{
-	size_t found = c1.find(string(c2));
-	if(found != string::npos) 
-		return true;
-	else 
-		return false;
+bool my_find(string & str1, string & str2)
+{	
+	int len1 = str1.length();
+	int len2 = str2.length();
 	
+	if(len2 > len1) return false;	
+	
+	for(int i = 0; i <= (len1-len2); i++)
+	{		
+		if(str1.at(i) == str2.at(0) || str1.at(i) == (str2.at(0)+(char)(32)))
+		{
+			int j, k;
+			for(j = 1, k = i+1; j < len2; j++, k++) 
+			{
+				if(str1.at(k) != str2.at(j) && str1.at(k) != (str2.at(j)+(char)(32)))
+					break;				
+			}
+			if(j == len2)
+				return true;				
+		}
+	}	
+	return false;
 }
 long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_info) 
 {	
@@ -387,7 +401,7 @@ int main (int argc, char* argv[])
 	fss_info.u_dirs_in_path			= 0;
 	fss_info.u_files_in_path		= 0;	
 	fss_info.u_symlinks_in_path		= 0;	
-	fss_info.u_filter				= NULL;
+	fss_info.u_filter				= "";
 	
 	p = ".";	
 	
