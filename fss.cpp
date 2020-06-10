@@ -334,7 +334,16 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 				fileSize += entry_size;										
 			
 				if(pFss_info.u_show_file)
-				{						
+				{			
+					if(pFss_info.u_print_perms)
+					{
+						file_status dirStat = status(entry, ec);
+						demo_perms(dirStat.permissions());
+						if(ec.value() != 0)
+							printErr(ec, entry);
+						ec.clear();
+					}
+			
 					cout << setfill(' ') << setw(NUMDIGITS) << format_number(entry_size);				
 					print_indent(u_level);												
 					wcout << entry.path().filename().wstring() << L"\n";
@@ -488,7 +497,7 @@ int main (int argc, char* argv[])
 	
 	if(!fss_info.u_apply_filter)
 	{	
-		cout << "Statistics of " << absolute(p).string() << endl;
+		cout << "Summary of " << absolute(p).string() << endl;
 		
 		cout << setfill(' ') << setw(NUMDIGITS) << format_number(fss_info.u_total_file_size);			
 		cout << "\t<" << format_number(fss_info.u_files_in_path) << " files>" << endl;		
