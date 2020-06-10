@@ -15,6 +15,7 @@ struct FSS_Info
 	bool 		u_show_file;
 	bool		u_show_err;	
 	bool		u_apply_filter;	
+	bool		u_print_perms;
 	
 	unsigned long      	u_total_files;
 	unsigned long      	u_total_dirs;	
@@ -176,6 +177,19 @@ long long size_of_dir(path pPath, error_code & ecode, struct FSS_Info * pFss_inf
 	return size_of_path;
 }
 
+void demo_perms(perms p)
+{
+    cout << ((p & perms::owner_read) != perms::none ? "r" : "-")
+         << ((p & perms::owner_write) != perms::none ? "w" : "-")
+         << ((p & perms::owner_exec) != perms::none ? "x" : "-")
+         << ((p & perms::group_read) != perms::none ? "r" : "-")
+         << ((p & perms::group_write) != perms::none ? "w" : "-")
+         << ((p & perms::group_exec) != perms::none ? "x" : "-")
+         << ((p & perms::others_read) != perms::none ? "r" : "-")
+         << ((p & perms::others_write) != perms::none ? "w" : "-")
+         << ((p & perms::others_exec) != perms::none ? "x" : "-");
+}
+
 void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info) 
 {
 	unsigned long	numFiles = 0;
@@ -217,6 +231,8 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 			continue;
 		}
 		
+		//demo_perms(status(entry).permissions());
+		
 	    if(is_dir == true) 
 		{	
 			if(!pFss_info.u_apply_filter)
@@ -239,6 +255,15 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 						if(pFss_info.u_show_err)
 							printErr(ec, entry);
 					}
+					ec.clear();
+				}
+				
+				if(pFss_info.u_print_perms)
+				{
+					file_status dirStat = status(entry, ec);
+					demo_perms(dirStat.permissions());
+					if(ec.value() != 0)
+						printErr(ec, entry);
 					ec.clear();
 				}
 				
@@ -417,6 +442,8 @@ int main (int argc, char* argv[])
 					fss_info.u_show_file = true;
 				else if((argv[i])[1] == 'e')
 					fss_info.u_show_err = true;
+				else if((argv[i])[1] == 'p')
+					fss_info.u_print_perms = true;
 				else 
 				{
 					cout << "\nSyntax:\n";
