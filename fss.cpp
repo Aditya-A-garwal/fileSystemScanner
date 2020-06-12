@@ -65,7 +65,7 @@ void printErr(error_code & ec, directory_entry & entry)
 	
 }
 
-bool my_find(string str1, string str2)
+bool my_find(const string & str1, const string & str2)
 {	
 	int len1 = str1.length();
 	int len2 = str2.length();
@@ -231,7 +231,6 @@ void scan_path(path pPath, int u_level, struct FSS_Info & pFss_info)
 			continue;
 		}
 		
-		//demo_perms(status(entry).permissions());
 		
 	    if(is_dir == true) 
 		{	
@@ -421,7 +420,8 @@ int main (int argc, char* argv[])
 	fss_info.u_show_dir 			= false;
 	fss_info.u_show_file 			= false;	
 	fss_info.u_show_err 			= false;		
-	fss_info.u_apply_filter			= false;		
+	fss_info.u_apply_filter		= false;		
+	fss_info.u_print_perms			= false;	
 	
 	fss_info.u_total_file_size		= 0;
 	fss_info.u_total_dir_size		= 0;
@@ -555,4 +555,6 @@ int main (int argc, char* argv[])
 		else 		
 			cout << "\t\t\tNo directories found with given filter" << endl;
 	}
+	
+	cout << endl;
 }
