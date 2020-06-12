@@ -2,7 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fcntl.h>
-#include <io.h>
+#include <stdio.h>
 
 #define NUMDIGITS	20
 
@@ -65,7 +65,7 @@ void printErr(error_code & ec, directory_entry & entry)
 	
 }
 
-bool my_find(string & str1, string & str2)
+bool my_find(string str1, string str2)
 {	
 	int len1 = str1.length();
 	int len2 = str2.length();
